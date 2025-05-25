@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import project.ii.flowx.model.dto.auth.AuthenticationResponse;
 import project.ii.flowx.model.dto.auth.LogoutRequest;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
 import project.ii.flowx.model.repository.UserRepository;
+import project.ii.flowx.security.UserDetailsServiceImpl;
 import project.ii.flowx.security.UserPrincipal;
 
 import java.util.Date;
@@ -44,6 +46,7 @@ public class AuthenticationService {
     final InvalidTokenRepository invalidTokenRepository;
     final PasswordEncoder passwordEncoder;
     final AuthenticationManager authenticationManager;
+    final UserDetailsServiceImpl userDetailsService;
 
     @Value("${spring.jwt.secret}")
     String jwtSecret;
@@ -84,6 +87,26 @@ public class AuthenticationService {
             throw e;
         }
     }
+
+    public AuthenticationResponse authenticateByGoogleOAuth2(String email) {
+        if(!userRepository.existsByEmail(email))
+            throw new FlowXException(FlowXError.NOT_FOUND, "User not found with email: " + email);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+
+        String token = generateToken((UserPrincipal) userDetails);
+        log.info("Authentication request for user {}", email);
+        log.info("Authorities: {}", userDetails.getAuthorities());
+
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
+    }
+
 
 //    public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
 //

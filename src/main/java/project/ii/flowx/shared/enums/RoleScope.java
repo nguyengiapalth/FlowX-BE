@@ -5,12 +5,5 @@ import lombok.Getter;
 
 @Getter
 public enum RoleScope {
-    GLOBAL("global"),
-    DEPARTMENT("department"),
-    PROJECT("project"),
-    USER("user");
-    private final String scope;
-    RoleScope(String scope) {
-        this.scope = scope;
-    }
+    GLOBAL, DEPARTMENT, PROJECT, TASK, CONTENT, MESSAGE;
 }

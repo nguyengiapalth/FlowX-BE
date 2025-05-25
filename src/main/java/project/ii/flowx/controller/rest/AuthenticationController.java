@@ -1,5 +1,6 @@
 package project.ii.flowx.controller.rest;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -11,11 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.auth.AuthenticationService;
+import project.ii.flowx.exceptionhandler.FlowXError;
+import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.auth.AuthenticationRequest;
 import project.ii.flowx.model.dto.auth.AuthenticationResponse;
 import project.ii.flowx.model.dto.auth.LogoutRequest;
 import project.ii.flowx.model.dto.auth.ChangePasswordRequest;
+import project.ii.flowx.security.GoogleTokenVerifier;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/authentication")
@@ -26,6 +32,7 @@ import project.ii.flowx.model.dto.auth.ChangePasswordRequest;
 @Tag(name = "Authentication", description = "Authentication API")
 public class AuthenticationController {
     AuthenticationService authenticationService;
+    GoogleTokenVerifier googleTokenVerifier;
 
     @PostMapping("/login")
     public FlowXResponse<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
@@ -54,9 +61,9 @@ public class AuthenticationController {
             }
     )
     @SecurityRequirement(name = "bearerAuth")
-    public FlowXResponse<Object> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
+    public FlowXResponse<Void> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         authenticationService.changePassword(changePasswordRequest);
-        return FlowXResponse.builder()
+        return FlowXResponse.<Void>builder()
                 .message("Password changed successfully")
                 .code(200)
                 .build();
@@ -71,4 +78,23 @@ public class AuthenticationController {
                 .message("Logout successful")
                 .build());
     }
+
+    @PostMapping("/google-oath2")
+    public FlowXResponse<AuthenticationResponse> authenticate(@RequestBody Map<String, String> body) {
+        try {
+            String idToken = body.get("idToken");
+            GoogleIdToken.Payload payload = googleTokenVerifier.verify(idToken);
+            String email = payload.getEmail();
+
+            return FlowXResponse.<AuthenticationResponse>builder()
+                    .data(authenticationService.authenticateByGoogleOAuth2(email))
+                    .code(200)
+                    .message("Google authentication successful")
+                    .build();
+
+        } catch (Exception e) {
+            throw new FlowXException(FlowXError.UNAUTHORIZED, "Google authentication failed: " + e.getMessage());
+        }
+    }
+
 }
