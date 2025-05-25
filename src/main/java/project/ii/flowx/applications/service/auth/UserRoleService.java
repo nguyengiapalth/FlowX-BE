@@ -79,9 +79,11 @@ public class UserRoleService {
                 throw new FlowXException(FlowXError.BAD_REQUEST, "Scope ID must be provided for non-global roles");
 
             // validate user has member userrole in the scope
-            if (!userRoleRepository.existsByUserIdAndScopeAndScopeId(user.getId(), userRoleCreateRequest.getScope(), userRoleCreateRequest.getScopeId())) {
+            // if role = member, we don't need to check this
+            if (role.getName().equals("MEMBER"))
+                log.info("Assigning member role to user {}", user.getEmail());
+            else if (!userRoleRepository.existsByUserIdAndScopeAndScopeId(user.getId(), userRoleCreateRequest.getScope(), userRoleCreateRequest.getScopeId()))
                 throw new FlowXException(FlowXError.BAD_REQUEST, "User must have a member role in the specified scope");
-            }
         }
 
         UserRole userRole = userRoleMapper.toUserRole(userRoleCreateRequest);

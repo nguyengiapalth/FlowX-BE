@@ -1,16 +1,19 @@
 package project.ii.flowx.applications.eventhandlers;
 
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.events.UserEvent;
 import project.ii.flowx.applications.service.auth.UserRoleService;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
+import project.ii.flowx.applications.service.helper.MailService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
@@ -18,6 +21,8 @@ import project.ii.flowx.model.dto.notification.NotificationResponse;
 import project.ii.flowx.model.dto.userrole.UserRoleCreateRequest;
 import project.ii.flowx.model.entity.Role;
 import project.ii.flowx.shared.enums.RoleScope;
+
+import java.io.IOException;
 
 @Component
 @EnableAsync
@@ -28,9 +33,11 @@ public class UserEventHandler {
     UserRoleService userRoleService;
     NotificationService notificationService;
     EntityLookupService entityLookupService;
+    MailService mailService;
 
     @EventListener
-    public void handleUserCreated(UserEvent.UserCreatedEvent event) {
+//    @Async
+    public void handleUserCreated(UserEvent.UserCreatedEvent event) throws MessagingException, IOException {
         log.info("User created: {}", event);
 
         Role role = entityLookupService.getRoleByName("USER")
@@ -48,8 +55,6 @@ public class UserEventHandler {
         log.info("Role request: {}", userRoleCreateRequest);
         userRoleService.assignRoleToUser(userRoleCreateRequest);
 
-        // Send a welcome email
-
         // Send welcome notification
         NotificationCreateRequest notificationCreateRequest = NotificationCreateRequest.builder()
                 .userId(event.userId())
@@ -59,6 +64,9 @@ public class UserEventHandler {
 
         NotificationResponse notification = notificationService.createNotification(notificationCreateRequest);
         log.info("Welcome notification created: {}", notification);
+
+        // Send welcome email
+        mailService.sendWelcomeEmail(event);
     }
 
     @EventListener

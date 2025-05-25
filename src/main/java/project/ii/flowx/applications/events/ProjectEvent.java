@@ -15,6 +15,6 @@ public class ProjectEvent {
     public record RemoveMemberEvent(long projectId, long userId) {}
 
     public record UpdateMemberRoleEvent(long projectId, long userId, RoleDefault newRole) {}
-    public record UpdateMemberStatusEvent(long projectId, long userId, RoleDefault newRole) {}
 
+    public record UpdateMemberStatusEvent(long projectId, long userId, RoleDefault newRole) {}
 }
