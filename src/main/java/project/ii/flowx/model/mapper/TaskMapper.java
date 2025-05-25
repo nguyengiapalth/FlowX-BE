@@ -19,14 +19,10 @@ public interface TaskMapper {
 
     TaskResponse toTaskResponse(Task task);
 
-    @Mapping(target = "project.id", source = "projectId")
-    @Mapping(target = "department.id", source = "departmentId")
     @Mapping(target = "assigner.id", source = "assignerId")
     @Mapping(target = "assignee.id", source = "assigneeId")
     Task toTask(TaskCreateRequest taskCreateRequest);
 
-    @Mapping(target = "project.id", source = "projectId")
-    @Mapping(target = "department.id", source = "departmentId")
     @Mapping(target = "assignee.id", source = "assigneeId")
     void updateTaskFromRequest(@MappingTarget Task task, TaskUpdateRequest taskUpdateRequest);
 

@@ -25,4 +25,5 @@ public class ContentResponse {
     Instant createdAt;
     Instant updatedAt;
     List<ContentResponse> replies;
+    private Long id;
 }

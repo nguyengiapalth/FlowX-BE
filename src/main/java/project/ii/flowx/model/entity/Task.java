@@ -7,6 +7,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.proxy.HibernateProxy;
+import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.TaskStatus;
 
@@ -35,15 +36,12 @@ public class Task {
     @Column(name = "description", length = Integer.MAX_VALUE)
     String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
-    @ToString.Exclude
-    Project project;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false)
+    ContentTargetType targetType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    @ToString.Exclude
-    Department department;
+    @Column(name = "target_id", nullable = false)
+    Long targetId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigner_id")

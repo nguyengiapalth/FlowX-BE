@@ -1,6 +1,9 @@
 package project.ii.flowx.model.dto.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
+import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.TaskStatus;
 
@@ -23,8 +27,8 @@ public class TaskResponse {
     Long id;
     String title;
     String description;
-    ProjectResponse project;
-    DepartmentResponse department;
+    ContentTargetType targetType;
+    Long targetId;
     UserResponse assigner;
     UserResponse assignee;
     LocalDate startDate;

@@ -69,8 +69,8 @@ public class AuthenticationController {
                 .build();
     }
 
-    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/logout")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<FlowXResponse<Void>> logout(@RequestBody LogoutRequest request) {
         authenticationService.logout(request);
         return ResponseEntity.ok(FlowXResponse.<Void>builder()

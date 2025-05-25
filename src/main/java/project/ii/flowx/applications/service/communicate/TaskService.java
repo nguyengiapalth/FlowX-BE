@@ -17,6 +17,7 @@ import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.TaskMapper;
 import project.ii.flowx.security.UserPrincipal;
+import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.TaskStatus;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class TaskService {
     TaskMapper taskMapper;
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskCreateRequest.projectId)")
     public TaskResponse createTask(TaskCreateRequest taskCreateRequest) {
         log.info("Creating new task");
         log.debug("Task create request: {}", taskCreateRequest);
@@ -46,6 +48,7 @@ public class TaskService {
     }
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskUpdateRequest.projectId) or authentication.principal.id == #taskUpdateRequest.assigneeId")
     public TaskResponse updateTask(Long id, TaskUpdateRequest taskUpdateRequest) {
         log.info("Updating task ID: {}", id);
         log.debug("Task update request: {}", taskUpdateRequest);
@@ -59,6 +62,7 @@ public class TaskService {
     }
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskUpdateRequest.projectId) or authentication.principal.id == #taskUpdateRequest.assigneeId")
     public TaskResponse updateTaskStatus(Long id, TaskStatus status) {
         log.info("Updating task status - ID: {}, New Status: {}", id, status);
 
@@ -79,6 +83,7 @@ public class TaskService {
     }
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', #id)")
     public void deleteTask(Long id) {
         log.info("Deleting task ID: {}", id);
 
@@ -97,6 +102,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public List<TaskResponse> getAllTasks() {
         log.info("Fetching all tasks");
 
@@ -112,7 +118,7 @@ public class TaskService {
     public List<TaskResponse> getTasksByProjectId(Long projectId) {
         log.info("Fetching tasks by project ID: {}", projectId);
 
-        List<Task> tasks = taskRepository.findByProjectId(projectId);
+        List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, projectId);
         List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
 
         log.info("Successfully fetched {} tasks for project ID: {}", responses.size(), projectId);
@@ -120,11 +126,11 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasDepartmentRole('MANAGER', departmentId)")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasDepartmentRole('MANAGER', #departmentId)")
     public List<TaskResponse> getTasksByDepartmentId(Long departmentId) {
         log.info("Fetching tasks by department ID: {}", departmentId);
 
-        List<Task> tasks = taskRepository.findByDepartmentId(departmentId);
+        List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, departmentId);
         List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
 
         log.info("Successfully fetched {} tasks for department ID: {}", responses.size(), departmentId);
@@ -163,7 +169,7 @@ public class TaskService {
         Long userId = getUserId();
         log.info("Fetching my tasks by project ID: {} for user: {}", projectId, userId);
 
-        List<Task> tasks = taskRepository.findByAssigneeIdAndProjectId(userId, projectId);
+        List<Task> tasks = taskRepository.findByAssigneeIdAndTargetTypeAndTargetId(userId, ContentTargetType.PROJECT, projectId);
         List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
 
         log.info("Successfully fetched {} my tasks for project ID: {} by user: {}", responses.size(), projectId, userId);

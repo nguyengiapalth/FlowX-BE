@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.model.dto.content.ContentCreateRequest;
 import project.ii.flowx.model.dto.content.ContentResponse;
 import project.ii.flowx.model.dto.content.ContentUpdateRequest;
@@ -27,8 +28,10 @@ public class ContentService {
     ContentRepository contentRepository;
     ContentMapper contentMapper;
     EntityLookupService entityLookupService;
+    AuthorizationService authorizeService;
 
     @Transactional
+    @PreAuthorize( "hasAuthority('ROLE_MANAGER') or @authorize.hasRole('MEMBER', #request.contentTargetType, #request.targetId)" )
     public ContentResponse createContent(ContentCreateRequest request) {
         Content content = contentMapper.toContent(request);
         if (request.getParentId() != -1) {
@@ -48,6 +51,7 @@ public class ContentService {
 
     @Transactional
     // preauth, is create
+
     public ContentResponse updateContent(Long id, ContentUpdateRequest request) {
         Content content = entityLookupService.getContentById(id);
         contentMapper.updateContentFromRequest(content, request);
@@ -59,6 +63,8 @@ public class ContentService {
     // preauth, is create or manage in scope
     public void deleteContent(Long id) {
         Content content = entityLookupService.getContentById(id);
+
+
         contentRepository.delete(content);
     }
 

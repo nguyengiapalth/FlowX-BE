@@ -107,29 +107,29 @@ public class TaskController {
                 .build();
     }
 
-    @Operation(
-            summary = "Get task by ID",
-            description = "Retrieves a task by its unique ID.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Task retrieved successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Task not found"
-                    )
-            }
-    )
-    @GetMapping("/{id}")
-    public FlowXResponse<TaskResponse> getTaskById(@PathVariable Long id) {
-        log.info("Fetching task by ID: {}", id);
-        return FlowXResponse.<TaskResponse>builder()
-                .data(taskService.getTaskById(id))
-                .message("Task retrieved successfully")
-                .code(200)
-                .build();
-    }
+//    @Operation(
+//            summary = "Get task by ID",
+//            description = "Retrieves a task by its unique ID.",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            description = "Task retrieved successfully"
+//                    ),
+//                    @ApiResponse(
+//                            responseCode = "404",
+//                            description = "Task not found"
+//                    )
+//            }
+//    )
+//    @GetMapping("/{id}")
+//    public FlowXResponse<TaskResponse> getTaskById(@PathVariable Long id) {
+//        log.info("Fetching task by ID: {}", id);
+//        return FlowXResponse.<TaskResponse>builder()
+//                .data(taskService.getTaskById(id))
+//                .message("Task retrieved successfully")
+//                .code(200)
+//                .build();
+//    }
 
     @Operation(
             summary = "Get all tasks",

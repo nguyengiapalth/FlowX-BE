@@ -1,10 +1,14 @@
 package project.ii.flowx.model.dto.task;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.TaskStatus;
 
@@ -22,11 +26,12 @@ public class TaskCreateRequest {
     @Schema(description = "Description of the task", example = "Implement JWT-based authentication for users")
     String description;
 
-    @Schema(description = "ID of the project", example = "1")
-    Long projectId;
+    @Enumerated(EnumType.STRING)
+    @Schema(description = "Type of the entity involved in the task", example = "DEPARTMENT")
+    ContentTargetType targetType;
 
-    @Schema(description = "ID of the department", example = "2")
-    Long departmentId;
+    @Schema(description = "ID of the target entity for the task", example = "1")
+    Long targetId;
 
     @Schema(description = "ID of the user who assigned the task", example = "3")
     Long assignerId;

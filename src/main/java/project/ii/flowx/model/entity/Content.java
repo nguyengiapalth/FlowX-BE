@@ -29,10 +29,16 @@ public class Content {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Column(nullable = false, length = 255)
     String title;
 
     @Column(columnDefinition = "TEXT")
     String body;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    User author;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false)
@@ -44,7 +50,6 @@ public class Content {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     Content parent;
 
     @Column(name = "depth", nullable = false)
@@ -60,7 +65,6 @@ public class Content {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     List<Content> replies = new ArrayList<>();
 
     @Override
