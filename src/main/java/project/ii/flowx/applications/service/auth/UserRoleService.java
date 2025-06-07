@@ -33,7 +33,6 @@ public class UserRoleService {
     EntityLookupService entityLookupService;
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     public List<UserRoleResponse> getRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
         log.info("User roles for user with id {} : {}", userId, userRoles);
@@ -47,7 +46,6 @@ public class UserRoleService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR') or #userId == authentication.principal.id")
     @Cacheable(value = "userLocalRoles", key = "#userId")
     public List<UserRoleResponse> getNonGlobalRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findLocalRoleByUserId(userId);
@@ -66,7 +64,7 @@ public class UserRoleService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('DEVELOPER') or hasRole('MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     @CacheEvict(value = {"userLocalRoles"}, key = "#userRoleCreateRequest.userId")
     public void assignRoleToUser(UserRoleCreateRequest userRoleCreateRequest) {
         // validate userId and roleId
@@ -116,7 +114,6 @@ public class UserRoleService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-//    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")
     public void deleteUserRolesByScope(RoleScope roleScope, long scopeId) {
         userRoleRepository.deleteByScopeAndScopeId(roleScope, scopeId);
         log.info("Deleted user roles with scope {} and scopeId {}, cache evicted", roleScope, scopeId);

@@ -20,5 +20,4 @@ public class TaskEventHandler {
     UserRoleService userRoleService;
     NotificationService notificationService;
     EntityLookupService entityLookupService;
-
 }

@@ -33,4 +33,5 @@ build/
 .vscode/
 
 ### Resources ###
-/src/main/resources/
+/src/main/resources/*
+/docs/**

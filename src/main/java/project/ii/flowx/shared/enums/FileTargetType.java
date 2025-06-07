@@ -3,7 +3,7 @@ package project.ii.flowx.shared.enums;
 import lombok.Getter;
 
 @Getter
-public enum EntityType {
+public enum FileTargetType {
     TASK,
     MESSAGE,
     CONTENT,

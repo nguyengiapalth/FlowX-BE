@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public enum FileVisibility {
-    GLOBAL, DEPARTMENT, PROJECT, TASK, CONTENT, MESSAGE;
+    GLOBAL, DEPARTMENT, PROJECT, TASK, CONTENT, MESSAGE, PRIVATE;
 }

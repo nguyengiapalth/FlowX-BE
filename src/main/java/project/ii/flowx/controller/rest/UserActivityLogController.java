@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.manage.UserActivityLogService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.useractivitylog.UserActivityLogResponse;
+import project.ii.flowx.model.entity.User;
+import project.ii.flowx.model.entity.UserActivityLog;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/activity-log")
@@ -37,8 +40,8 @@ public class UserActivityLogController {
             }
     )
     @GetMapping("/get-all")
-    public FlowXResponse<List<UserActivityLogResponse>> getAllActivityLogs() {
-        return FlowXResponse.<List<UserActivityLogResponse>>builder()
+    public FlowXResponse<Map<User, List<UserActivityLog>>> getAllActivityLogs() {
+        return FlowXResponse.<Map<User, List<UserActivityLog>>>builder()
                 .data(userActivityLogService.getAllActivityLogs())
                 .message("Activity logs retrieved successfully")
                 .code(200)

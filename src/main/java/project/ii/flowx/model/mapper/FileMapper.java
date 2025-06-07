@@ -19,7 +19,6 @@ public interface FileMapper {
 
     FileResponse toFileResponse(File file);
 
-    @Mapping(target = "uploader.id", source = "uploaderId")
     File toFile(FileCreateRequest fileCreateRequest);
 
     void updateFileFromRequest(@MappingTarget File file, FileUpdateRequest fileUpdateRequest);

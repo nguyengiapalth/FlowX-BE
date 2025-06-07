@@ -23,7 +23,5 @@ public interface UserRoleMapper {
     @Mapping(target = "role.id", source = "roleId")
     UserRole toUserRole(UserRoleCreateRequest userRoleCreateRequest);
 
-    void updateUserRoleFromRequest(@MappingTarget UserRole userRole, UserRoleUpdateRequest userRoleUpdateRequest);
-
     List<UserRoleResponse> toUserRoleResponseList(List<UserRole> userRoles);
 }

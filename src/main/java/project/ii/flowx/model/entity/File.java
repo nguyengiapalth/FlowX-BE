@@ -6,7 +6,8 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
-import project.ii.flowx.shared.enums.EntityType;
+import project.ii.flowx.shared.enums.FileTargetType;
+import project.ii.flowx.shared.enums.FileStatus;
 import project.ii.flowx.shared.enums.FileVisibility;
 
 import java.time.Instant;
@@ -36,17 +37,20 @@ public class File {
     @Column(name = "size")
     Long size;
 
+    @Column(name = "actual_size")
+    Long actualSize;
+
     @Column(name = "bucket", length = 100)
     String bucket;
 
     @Column(name = "object_path")
-    String objectPath;
+    String objectKey;
 
     @Column(name = "content_hash", length = 64)
     String contentHash;
 
     @Column(name = "entity_id", nullable = false)
-    Long entityId;
+    Long targetId;
 
     @Column(name = "description", length = Integer.MAX_VALUE)
     String description;
@@ -62,12 +66,17 @@ public class File {
 
     @Column(name = "entity_type", columnDefinition = "text")
     @Enumerated(EnumType.STRING)
-    EntityType entityType;
+    FileTargetType fileTargetType;
 
     @ColumnDefault("'private'")
     @Column(name = "visibility", columnDefinition = "text")
     @Enumerated(EnumType.STRING)
     FileVisibility visibility;
+
+    @ColumnDefault("'processing'")
+    @Column(name = "file_status")
+    @Enumerated(EnumType.STRING)
+    FileStatus fileStatus;
 
     @Override
     public final boolean equals(Object o) {

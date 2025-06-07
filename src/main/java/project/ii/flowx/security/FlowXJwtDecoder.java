@@ -40,10 +40,7 @@ public class FlowXJwtDecoder implements JwtDecoder {
 
     @Override
     public Jwt decode(String token) throws JwtException {
-        // Check if token is in the invalidated tokens repository
-        if (invalidTokenRepository.existsByToken(token)) {
-            throw new JwtException("Token has been invalidated");
-        }
+        if (invalidTokenRepository.existsByToken(token)) throw new JwtException("Token has been invalidated");
 
         try {
             // First verify with Auth0 JWT to ensure compatibility with existing code

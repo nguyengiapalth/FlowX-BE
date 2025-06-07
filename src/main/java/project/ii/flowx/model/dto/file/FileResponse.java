@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.entity.User;
-import project.ii.flowx.shared.enums.EntityType;
+import project.ii.flowx.shared.enums.FileTargetType;
+import project.ii.flowx.shared.enums.FileStatus;
+import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileVisibility;
 
 import java.time.Instant;
@@ -21,13 +23,15 @@ public class FileResponse {
     String name;
     String type;
     Long size;
-    String bucket;
-    String objectPath;
+    String objectKey;
     String contentHash;
     Long entityId;
     String description;
     User uploader;
     Instant createdAt;
-    EntityType entityType;
+    FileTargetType fileTargetType;
     FileVisibility visibility;
+    String url;
+    Long actualSize;
+    FileStatus fileStatus;
 }

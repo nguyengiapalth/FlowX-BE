@@ -65,6 +65,7 @@ public class Content {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
+    @OrderBy("createdAt ASC")
     List<Content> replies = new ArrayList<>();
 
     @Override

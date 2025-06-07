@@ -90,11 +90,6 @@ public class EntityLookupService {
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
     }
 
-    public <T> T getEntityById(JpaRepository<T, Long> repository, Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Entity not found"));
-    }
-
     public Optional<Role> getRoleByName(String roleName) {
         return roleRepository.findByName(roleName);
     }

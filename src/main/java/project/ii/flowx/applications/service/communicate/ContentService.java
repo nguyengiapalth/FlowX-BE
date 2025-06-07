@@ -50,8 +50,7 @@ public class ContentService {
     }
 
     @Transactional
-    // preauth, is create
-
+    @PreAuthorize("@authorize.isContentAuthor(id)")
     public ContentResponse updateContent(Long id, ContentUpdateRequest request) {
         Content content = entityLookupService.getContentById(id);
         contentMapper.updateContentFromRequest(content, request);
@@ -60,11 +59,10 @@ public class ContentService {
     }
 
     @Transactional
-    // preauth, is create or manage in scope
-    public void deleteContent(Long id) {
+    @PreAuthorize("@authorize.isContentAuthor(#id) " +
+            "or hasAuthority('ROLE_MANAGER') or @authorize.hasRole('MEMBER', #contentTargetType, #targetId)")
+    public void deleteContent(Long id, ContentTargetType contentTargetType, Long targetId) {
         Content content = entityLookupService.getContentById(id);
-
-
         contentRepository.delete(content);
     }
 

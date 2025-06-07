@@ -74,7 +74,7 @@ public class AuthenticationController {
     public ResponseEntity<FlowXResponse<Void>> logout(@RequestBody LogoutRequest request) {
         authenticationService.logout(request);
         return ResponseEntity.ok(FlowXResponse.<Void>builder()
-                .code(1000)
+                .code(200)
                 .message("Logout successful")
                 .build());
     }

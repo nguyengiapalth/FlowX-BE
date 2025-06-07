@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.entity.UserActivityLog;
 import project.ii.flowx.model.repository.UserActivityLogRepository;
 import project.ii.flowx.model.dto.useractivitylog.UserActivityLogCreateRequest;
@@ -16,6 +17,8 @@ import project.ii.flowx.model.mapper.UserActivityLogMapper;
 import project.ii.flowx.security.UserPrincipal;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -25,9 +28,6 @@ public class UserActivityLogService {
     UserActivityLogRepository userActivityLogRepository;
     UserActivityLogMapper userActivityLogMapper;
 
-    /*
-        * Logs a user activity.
-     */
     @Transactional
     public UserActivityLogResponse logActivity(UserActivityLogCreateRequest logCreateRequest) {
         UserActivityLog activityLog = userActivityLogMapper.toUserActivityLog(logCreateRequest);
@@ -35,23 +35,28 @@ public class UserActivityLogService {
         return userActivityLogMapper.toUserActivityLogResponse(activityLog);
     }
     
-//    @Transactional
-//    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-//    public void deleteActivityLog(Long id) {
-//        userActivityLogRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Activity log not found"));
-//        userActivityLogRepository.deleteById(id);
-//    }
-
-    @Transactional(readOnly = true)
+    @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    public List<UserActivityLogResponse> getAllActivityLogs() {
-        List<UserActivityLog> activityLogs = userActivityLogRepository.findAll();
-        return userActivityLogMapper.toUserActivityLogResponseList(activityLogs);
+    public void deleteActivityLog(Long id) {
+        userActivityLogRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Activity log not found"));
+        userActivityLogRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR') " +
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+    public Map<User, List<UserActivityLog>> getAllActivityLogs() {
+        List<UserActivityLog> activityLogs = userActivityLogRepository.findAll();
+        // sort by timestamp
+        activityLogs.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        List<UserActivityLogResponse> activityLogResponses = userActivityLogMapper.toUserActivityLogResponseList(activityLogs);
+
+        return activityLogs.stream()
+                .collect(Collectors.groupingBy(UserActivityLog::getUser));
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') " +
             "or userId == authentication.principal.id")
     public List<UserActivityLogResponse> getActivityLogsByUserId(Long userId) {
         List<UserActivityLog> activityLogs = userActivityLogRepository.findByUserId(userId);

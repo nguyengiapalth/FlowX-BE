@@ -36,7 +36,6 @@ public class UserEventHandler {
     MailService mailService;
 
     @EventListener
-//    @Async
     public void handleUserCreated(UserEvent.UserCreatedEvent event) throws MessagingException, IOException {
         log.info("User created: {}", event);
 

@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import project.ii.flowx.applications.events.UserEvent;
@@ -21,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@EnableAsync(proxyTargetClass = true)
 public class MailService {
 
     JavaMailSender mailSender;
@@ -36,6 +39,7 @@ public class MailService {
         mailSender.send(message);
     }
 
+    @Async
     public void sendWelcomeEmail(UserEvent.UserCreatedEvent event) throws MessagingException, IOException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");

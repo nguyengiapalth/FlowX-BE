@@ -40,7 +40,7 @@ public class TaskService {
         task.setIsCompleted(false);
         if (task.getStatus() == null) task.setStatus(TaskStatus.TO_DO);
         if (task.getHasFiles() == null) task.setHasFiles(false);
-        
+
         task = taskRepository.save(task);
         log.info("Successfully created task with ID: {}", task.getId());
 
@@ -52,11 +52,11 @@ public class TaskService {
     public TaskResponse updateTask(Long id, TaskUpdateRequest taskUpdateRequest) {
         log.info("Updating task ID: {}", id);
         log.debug("Task update request: {}", taskUpdateRequest);
-        
+
         Task task = getTaskByIdInternal(id);
         taskMapper.updateTaskFromRequest(task, taskUpdateRequest);
         task = taskRepository.save(task);
-        
+
         log.info("Successfully updated task ID: {}", id);
         return taskMapper.toTaskResponse(task);
     }
@@ -244,5 +244,21 @@ public class TaskService {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         return userPrincipal.getId();
+    }
+
+    public List<Task> getTasksDueToday() {
+        log.info("Fetching tasks due today");
+        return taskRepository.findTasksDueToday();
+    }
+
+    public List<Task> getOverdueTasks() {
+        log.info("Fetching overdue tasks");
+        List<Task> overdueTasks = taskRepository.findOverdueTasks();
+        if (overdueTasks.isEmpty()) {
+            log.info("No overdue tasks found");
+        } else {
+            log.info("Found {} overdue tasks", overdueTasks.size());
+        }
+        return overdueTasks;
     }
 }
