@@ -35,7 +35,8 @@ public class OpenAPIConfig {
 
                         new Server()
                                 .url("https://api.example.com")
-                                .description("Server production")))
+                                .description("Server production")
+                ))
                 .components(new Components()
                         // Bearer token auth
                         .addSecuritySchemes("bearerAuth",

@@ -14,6 +14,7 @@ import project.ii.flowx.model.dto.userrole.UserRoleResponse;
 import project.ii.flowx.model.entity.Project;
 import project.ii.flowx.model.entity.Task;
 import project.ii.flowx.security.UserPrincipal;
+import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.RoleScope;
 
 import java.util.List;
@@ -54,6 +55,26 @@ public class AuthorizationService {
         return hasRole(roleName, RoleScope.DEPARTMENT, departmentId);
     }
 
+    public boolean canAssignRole(RoleScope roleScope, Long scopeId) {
+        if (roleScope == RoleScope.DEPARTMENT)
+            return hasDepartmentRole("MANAGER", scopeId);
+        if (roleScope == RoleScope.PROJECT)
+            return hasProjectRole("MANAGER", scopeId);
+        else return false;
+    }
+
+    public boolean canAccessScope(Long targetId, ContentTargetType targetType) {
+        if (targetType == ContentTargetType.GLOBAL) return true;
+        if (targetType == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MEMBER", targetId) || hasDepartmentRole("MANAGER", targetId);
+        if (targetType == ContentTargetType.PROJECT)
+            return hasProjectRole("MEMBER", targetId) || hasProjectRole("MANAGER", targetId);
+        if (targetType == ContentTargetType.TASK)
+            return isTaskAssignee(targetId) || isTaskManager(targetId);
+
+        return false; // No access for other types
+    }
+
     public boolean isTaskAssignee(Long taskId) {
         Long userId = getUserId();
         Task task = entityLookupService.getTaskById(taskId);
@@ -72,12 +93,62 @@ public class AuthorizationService {
         return task.getAssigner().getId().equals(userId);
     }
 
+    public boolean isTaskManager(Long taskId) {
+        Long userId = getUserId();
+        Task task = entityLookupService.getTaskById(taskId);
+        if (task == null) throw new FlowXException(FlowXError.NOT_FOUND, "Task not found with ID: " + taskId);
+        if (task.getTargetType() == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MANAGER", task.getTargetId());
+        if (task.getTargetType() == ContentTargetType.PROJECT)
+            return hasProjectRole("MANAGER", task.getTargetId());
+        else return false;
+    }
+
+    public boolean canCreateTask(Long targetId, ContentTargetType targetType) {
+        if (targetType == ContentTargetType.GLOBAL) return false;
+        if (targetType == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MEMBER", targetId) || hasDepartmentRole("MANAGER", targetId);
+        if (targetType == ContentTargetType.PROJECT)
+            return hasProjectRole("MEMBER", targetId) || hasProjectRole("MANAGER", targetId);
+        return false; // No access for other types
+    }
+
     public boolean isContentAuthor(Long contentId) {
         Long userId = getUserId();
         var content = entityLookupService.getContentById(contentId);
         if (content == null) throw new FlowXException(FlowXError.NOT_FOUND, "Content not found with ID: " + contentId);
 
         return content.getAuthor().getId().equals(userId);
+    }
+
+    public boolean isContentManager(Long contentId) {
+        Long userId = getUserId();
+        var content = entityLookupService.getContentById(contentId);
+        if (content == null) throw new FlowXException(FlowXError.NOT_FOUND, "Content not found with ID: " + contentId);
+
+        if (content.getContentTargetType() == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MANAGER", content.getTargetId());
+        if (content.getContentTargetType() == ContentTargetType.PROJECT)
+            return hasProjectRole("MANAGER", content.getTargetId());
+        else return false;
+    }
+
+    public boolean canAccessContent(Long contentId) {
+        Long userId = getUserId();
+        var content = entityLookupService.getContentById(contentId);
+        if (content == null) throw new FlowXException(FlowXError.NOT_FOUND, "Content not found with ID: " + contentId);
+
+        // Check if the user is the author
+        if (content.getAuthor().getId().equals(userId)) return true;
+
+        // Check if the user has a manager role in the target department or project
+        if (content.getContentTargetType() == ContentTargetType.GLOBAL) return true;
+        if (content.getContentTargetType() == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MANAGER", content.getTargetId());
+        if (content.getContentTargetType() == ContentTargetType.PROJECT)
+            return hasProjectRole("MANAGER", content.getTargetId());
+
+        return false; // No access if not author or manager
     }
 
     public Long getUserId() {

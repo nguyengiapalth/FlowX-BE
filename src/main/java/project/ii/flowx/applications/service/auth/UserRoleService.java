@@ -46,16 +46,15 @@ public class UserRoleService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "userLocalRoles", key = "#userId")
+    @Cacheable(value = "userLocalRoles", key = "#userId")// , cacheManager = "caffeineCacheManager")
     public List<UserRoleResponse> getNonGlobalRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findLocalRoleByUserId(userId);
-
         log.info("Non-global user roles for user with id {} : {}", userId, userRoles);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_DEVELOPER', 'ROLE_MANAGER', 'ROLE_HR')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     @Cacheable(value = "roleUsersByRoleId", key = "#roleId")
     public List<UserRoleResponse> getUsersForRole(Long roleId) {
         List<UserRole> userRoles = userRoleRepository.findByRoleId(roleId);
@@ -64,8 +63,9 @@ public class UserRoleService {
     }
 
     @Transactional
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    @CacheEvict(value = {"userLocalRoles"}, key = "#userRoleCreateRequest.userId")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR') " +
+            "or @authorize.canAssignRole(#userRoleCreateRequest.scope, #userRoleCreateRequest.scopeId)")
+    @CacheEvict(value = {"userLocalRoles"}, key = "#userRoleCreateRequest.userId")//, cacheManager = "caffeineCacheManager")
     public void assignRoleToUser(UserRoleCreateRequest userRoleCreateRequest) {
         // validate userId and roleId
         User user = entityLookupService.getUserById(userRoleCreateRequest.getUserId());
@@ -103,7 +103,7 @@ public class UserRoleService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")
+    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")//, cacheManager = "caffeineCacheManager")
     public void deleteUserRolesByUserIdAndScope(Long userId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndScopeAndScopeId(userId, roleScope, scopeId);
 

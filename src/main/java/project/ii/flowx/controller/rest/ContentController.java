@@ -72,9 +72,7 @@ public class ContentController {
             }
     )
     @PutMapping("/update/{id}")
-    public FlowXResponse<ContentResponse> updateContent(
-            @PathVariable Long id,
-            @RequestBody ContentUpdateRequest request) {
+    public FlowXResponse<ContentResponse> updateContent(@PathVariable Long id, @RequestBody ContentUpdateRequest request) {
         return FlowXResponse.<ContentResponse>builder()
                 .data(contentService.updateContent(id, request))
                 .message("Content updated successfully")
@@ -97,10 +95,8 @@ public class ContentController {
             }
     )
     @DeleteMapping("/delete/{id}")
-    public FlowXResponse<Void> deleteContent(@PathVariable Long id,
-                                             @RequestParam(required = false) ContentTargetType contentTargetType,
-                                             @RequestParam(required = false) Long targetId) {
-        contentService.deleteContent(id, contentTargetType, targetId);
+    public FlowXResponse<Void> deleteContent(@PathVariable Long id) {
+        contentService.deleteContent(id);
         return FlowXResponse.<Void>builder()
                 .message("Content deleted successfully")
                 .code(200)

@@ -31,7 +31,7 @@ public class TaskService {
     TaskMapper taskMapper;
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskCreateRequest.projectId)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canCreateTask(#taskCreateRequest.targetId, #taskCreateRequest.targetType)")
     public TaskResponse createTask(TaskCreateRequest taskCreateRequest) {
         log.info("Creating new task");
         log.debug("Task create request: {}", taskCreateRequest);
@@ -48,7 +48,7 @@ public class TaskService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskUpdateRequest.projectId) or authentication.principal.id == #taskUpdateRequest.assigneeId")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse updateTask(Long id, TaskUpdateRequest taskUpdateRequest) {
         log.info("Updating task ID: {}", id);
         log.debug("Task update request: {}", taskUpdateRequest);
@@ -62,7 +62,7 @@ public class TaskService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #taskUpdateRequest.projectId) or authentication.principal.id == #taskUpdateRequest.assigneeId")
+    @PreAuthorize("@authorize.isTaskAssignee(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse updateTaskStatus(Long id, TaskStatus status) {
         log.info("Updating task status - ID: {}, New Status: {}", id, status);
 
@@ -83,7 +83,37 @@ public class TaskService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', #id)")
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse markTaskCompleted(Long id) {
+        log.info("Marking task as completed - ID: {}", id);
+
+        Task task = getTaskByIdInternal(id);
+        task.setIsCompleted(true);
+        task.setStatus(TaskStatus.COMPLETED);
+
+        task = taskRepository.save(task);
+        log.info("Successfully marked task ID: {} as completed", id);
+
+        return taskMapper.toTaskResponse(task);
+    }
+
+    @Transactional
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse markTaskIncomplete(Long id) {
+        log.info("Marking task as incomplete - ID: {}", id);
+
+        Task task = getTaskByIdInternal(id);
+        task.setIsCompleted(false);
+        if (task.getStatus() == TaskStatus.COMPLETED) task.setStatus(TaskStatus.IN_PROGRESS);
+
+        task = taskRepository.save(task);
+        log.info("Successfully marked task ID: {} as incomplete", id);
+
+        return taskMapper.toTaskResponse(task);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public void deleteTask(Long id) {
         log.info("Deleting task ID: {}", id);
 
@@ -94,6 +124,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssignee(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse getTaskById(Long id) {
         log.debug("Fetching task by ID: {}", id);
 
@@ -114,7 +145,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', projectId)")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', #projectId)")
     public List<TaskResponse> getTasksByProjectId(Long projectId) {
         log.info("Fetching tasks by project ID: {}", projectId);
 
@@ -201,36 +232,6 @@ public class TaskService {
         return responses;
     }
 
-    @Transactional
-    @PreAuthorize("isAuthenticated()")
-    public TaskResponse markTaskCompleted(Long id) {
-        log.info("Marking task as completed - ID: {}", id);
-
-        Task task = getTaskByIdInternal(id);
-        task.setIsCompleted(true);
-        task.setStatus(TaskStatus.COMPLETED);
-
-        task = taskRepository.save(task);
-        log.info("Successfully marked task ID: {} as completed", id);
-
-        return taskMapper.toTaskResponse(task);
-    }
-
-    @Transactional
-    @PreAuthorize("isAuthenticated()")
-    public TaskResponse markTaskIncomplete(Long id) {
-        log.info("Marking task as incomplete - ID: {}", id);
-
-        Task task = getTaskByIdInternal(id);
-        task.setIsCompleted(false);
-        if (task.getStatus() == TaskStatus.COMPLETED) task.setStatus(TaskStatus.IN_PROGRESS);
-
-        task = taskRepository.save(task);
-        log.info("Successfully marked task ID: {} as incomplete", id);
-
-        return taskMapper.toTaskResponse(task);
-    }
-
     // Helper methods
     private Task getTaskByIdInternal(Long id) {
         return taskRepository.findById(id)
@@ -246,6 +247,7 @@ public class TaskService {
         return userPrincipal.getId();
     }
 
+    // For schedule job
     public List<Task> getTasksDueToday() {
         log.info("Fetching tasks due today");
         return taskRepository.findTasksDueToday();

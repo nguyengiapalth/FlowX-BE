@@ -168,7 +168,7 @@ public class AuthenticationService {
                 .withExpiresAt(expiryDate)
                 .withJWTId(UUID.randomUUID().toString())
                 .withClaim("userId", userPrincipal.getId())
-                .withClaim("scope", scope)        // <-- Thêm phần này
+                .withClaim("scope", scope)
                 .sign(Algorithm.HMAC256(jwtSecret));
     }
 
@@ -186,7 +186,7 @@ public class AuthenticationService {
                 .withExpiresAt(expiryDate)
                 .withJWTId(UUID.randomUUID().toString())
                 .withClaim("userId", userPrincipal.getId())
-                .withClaim("scope", scope)        // <-- Thêm phần này
+                .withClaim("scope", scope)
                 .sign(Algorithm.HMAC256(jwtSecret));
     }
 }

@@ -17,7 +17,6 @@ import project.ii.flowx.model.entity.File;
 
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
@@ -28,11 +27,8 @@ public class MinioService {
 
     final MinioClient minioClient;
 
-    @Value("${minio.bucket-name}")
-    String bucketName;
-
-    @Value("${minio.presigned.expiry:3600}")
-    int presignedExpiry;
+    @Value("${minio.bucket-name}") String bucketName;
+    @Value("${minio.presigned.expiry:3600}") int presignedExpiry;
 
     @Transactional(readOnly = true)
     public PresignedResponse getPresignedUploadUrl(String fileName) {
@@ -107,7 +103,6 @@ public class MinioService {
         }
     }
 
-
     // Get object info
     @Transactional(readOnly = true)
     public StatObjectResponse getObjectInfo(String objectPath) {
@@ -171,6 +166,7 @@ public class MinioService {
     }
 
     private String generateObjectName(String originalFileName) {
+        String uuid = java.util.UUID.randomUUID().toString();
         String timestamp = String.valueOf(Instant.now().toEpochMilli());
         String extension = "";
 
@@ -178,8 +174,9 @@ public class MinioService {
             extension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
 
-        return timestamp + "_" + originalFileName;
+        return uuid + "_" + timestamp;  // + "_" + originalFileName;
     }
+
 
     private String calculateHash(byte[] data) {
         try {

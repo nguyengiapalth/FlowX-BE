@@ -5,6 +5,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,8 +25,7 @@ import java.time.Instant;
 import java.util.List;
 /**
  * Service class for managing notifications.
- * Handles CRUD operations and business logic related to notifications.
- *
+ * Creates, marks as read/unread, and retrieves notifications for users.
 **/
 @Service
 @Slf4j
@@ -32,6 +35,8 @@ public class NotificationService {
      NotificationRepository notificationRepository;
      NotificationMapper notificationMapper;
      EntityLookupService entityLookupService;
+
+    SimpMessagingTemplate messagingTemplate;
 
     @Transactional()
     @PreAuthorize("isAuthenticated()")
@@ -43,6 +48,10 @@ public class NotificationService {
         Notification savedNotification = notificationRepository.save(notification);
 
         log.info("Successfully created notification with ID: {}", savedNotification.getId());
+        // Publish the notification to the user's WebSocket channel
+        messagingTemplate.convertAndSend("/topic/notifications/" + createRequest.getUserId(),
+            notificationMapper.toNotificationResponse(savedNotification));
+
         return notificationMapper.toNotificationResponse(savedNotification);
     }
 
@@ -95,7 +104,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-    public List<NotificationResponse> getMyNotifications() {
+    public Page<NotificationResponse> getMyNotifications(int page) {
         var context = SecurityContextHolder.getContext();
         var authentication = context.getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -103,10 +112,12 @@ public class NotificationService {
 
         log.info("Fetching notifications for user: {}", currentUserId);
 
-        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId);
+        Pageable pageable = PageRequest.of(page, 10);
 
-        List<NotificationResponse> responses = notificationMapper.toNotificationResponseList(notifications);
-        log.info("Successfully fetched {} notifications for user: {}", responses.size(), currentUserId);
+        Page<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId,pageable );
+
+        Page<NotificationResponse> responses = notifications.map(notificationMapper::toNotificationResponse);
+        log.info("Successfully fetched {} notifications for user: {}", 10, currentUserId);
         return responses;
     }
 }

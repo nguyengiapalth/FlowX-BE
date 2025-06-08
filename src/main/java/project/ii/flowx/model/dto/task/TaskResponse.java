@@ -35,8 +35,8 @@ public class TaskResponse {
     LocalDate dueDate;
     LocalDate completedDate;
     Integer progress;
-    Instant createdAt;
     Boolean hasFiles;
+    Instant createdAt;
     Instant updatedAt;
     TaskStatus status;
     PriorityLevel priority;

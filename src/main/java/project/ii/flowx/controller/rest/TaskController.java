@@ -84,6 +84,78 @@ public class TaskController {
     }
 
     @Operation(
+            summary = "Update task status",
+            description = "Updates the status of a specific task.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Task status updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Task not found"
+                    )
+            }
+    )
+    @PutMapping("/{id}/status")
+    public FlowXResponse<TaskResponse> updateTaskStatus(@PathVariable Long id, @RequestParam TaskStatus status) {
+        log.info("Updating task status - ID: {}, Status: {}", id, status);
+        return FlowXResponse.<TaskResponse>builder()
+                .data(taskService.updateTaskStatus(id, status))
+                .message("Task status updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Mark task as completed",
+            description = "Marks a specific task as completed.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Task marked as completed successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Task not found"
+                    )
+            }
+    )
+    @PutMapping("/{id}/complete")
+    public FlowXResponse<TaskResponse> markTaskCompleted(@PathVariable Long id) {
+        log.info("Marking task as completed - ID: {}", id);
+        return FlowXResponse.<TaskResponse>builder()
+                .data(taskService.markTaskCompleted(id))
+                .message("Task marked as completed successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Mark task as incomplete",
+            description = "Marks a specific task as incomplete.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Task marked as incomplete successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Task not found"
+                    )
+            }
+    )
+    @PutMapping("/{id}/incomplete")
+    public FlowXResponse<TaskResponse> markTaskIncomplete(@PathVariable Long id) {
+        log.info("Marking task as incomplete - ID: {}", id);
+        return FlowXResponse.<TaskResponse>builder()
+                .data(taskService.markTaskIncomplete(id))
+                .message("Task marked as incomplete successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
             summary = "Delete task",
             description = "Deletes a task by its unique ID.",
             responses = {
@@ -107,29 +179,29 @@ public class TaskController {
                 .build();
     }
 
-//    @Operation(
-//            summary = "Get task by ID",
-//            description = "Retrieves a task by its unique ID.",
-//            responses = {
-//                    @ApiResponse(
-//                            responseCode = "200",
-//                            description = "Task retrieved successfully"
-//                    ),
-//                    @ApiResponse(
-//                            responseCode = "404",
-//                            description = "Task not found"
-//                    )
-//            }
-//    )
-//    @GetMapping("/{id}")
-//    public FlowXResponse<TaskResponse> getTaskById(@PathVariable Long id) {
-//        log.info("Fetching task by ID: {}", id);
-//        return FlowXResponse.<TaskResponse>builder()
-//                .data(taskService.getTaskById(id))
-//                .message("Task retrieved successfully")
-//                .code(200)
-//                .build();
-//    }
+    @Operation(
+            summary = "Get task by ID",
+            description = "Retrieves a task by its unique ID.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Task retrieved successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Task not found"
+                    )
+            }
+    )
+    @GetMapping("/{id}")
+    public FlowXResponse<TaskResponse> getTaskById(@PathVariable Long id) {
+        log.info("Fetching task by ID: {}", id);
+        return FlowXResponse.<TaskResponse>builder()
+                .data(taskService.getTaskById(id))
+                .message("Task retrieved successfully")
+                .code(200)
+                .build();
+    }
 
     @Operation(
             summary = "Get all tasks",
@@ -147,32 +219,6 @@ public class TaskController {
         return FlowXResponse.<List<TaskResponse>>builder()
                 .data(taskService.getAllTasks())
                 .message("List of tasks retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Update task status",
-            description = "Updates the status of a specific task.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Task status updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Task not found"
-                    )
-            }
-    )
-    @PutMapping("/{id}/status")
-    public FlowXResponse<TaskResponse> updateTaskStatus(
-            @PathVariable Long id,
-            @RequestParam TaskStatus status) {
-        log.info("Updating task status - ID: {}, Status: {}", id, status);
-        return FlowXResponse.<TaskResponse>builder()
-                .data(taskService.updateTaskStatus(id, status))
-                .message("Task status updated successfully")
                 .code(200)
                 .build();
     }
@@ -313,54 +359,6 @@ public class TaskController {
         return FlowXResponse.<List<TaskResponse>>builder()
                 .data(taskService.getMyTasksByStatus(status))
                 .message("My tasks retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Mark task as completed",
-            description = "Marks a specific task as completed.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Task marked as completed successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Task not found"
-                    )
-            }
-    )
-    @PutMapping("/{id}/complete")
-    public FlowXResponse<TaskResponse> markTaskCompleted(@PathVariable Long id) {
-        log.info("Marking task as completed - ID: {}", id);
-        return FlowXResponse.<TaskResponse>builder()
-                .data(taskService.markTaskCompleted(id))
-                .message("Task marked as completed successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Mark task as incomplete",
-            description = "Marks a specific task as incomplete.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Task marked as incomplete successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Task not found"
-                    )
-            }
-    )
-    @PutMapping("/{id}/incomplete")
-    public FlowXResponse<TaskResponse> markTaskIncomplete(@PathVariable Long id) {
-        log.info("Marking task as incomplete - ID: {}", id);
-        return FlowXResponse.<TaskResponse>builder()
-                .data(taskService.markTaskIncomplete(id))
-                .message("Task marked as incomplete successfully")
                 .code(200)
                 .build();
     }

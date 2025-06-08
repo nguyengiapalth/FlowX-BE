@@ -1,7 +1,6 @@
 package project.ii.flowx.controller.rest;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,13 +9,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.dto.notification.NotificationResponse;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("api/notification")
@@ -65,10 +63,10 @@ public class NotificationController {
             }
     )
     @GetMapping("/my-notifications")
-    public FlowXResponse<List<NotificationResponse>> getMyNotifications() {
+    public FlowXResponse<Page<NotificationResponse>> getMyNotifications(@RequestParam int page) {
         log.info("Retrieving notifications for the current user");
-        return FlowXResponse.<List<NotificationResponse>>builder()
-                .data(notificationService.getMyNotifications())
+        return FlowXResponse.<Page<NotificationResponse>>builder()
+                .data(notificationService.getMyNotifications(page))
                 .message("Notifications retrieved successfully")
                 .code(200)
                 .build();
@@ -93,9 +91,7 @@ public class NotificationController {
             }
     )
     @PutMapping("/{id}/mark-read")
-    public FlowXResponse<Void> markAsRead(
-            @Parameter(description = "Notification ID", required = true)
-            @PathVariable Long id) {
+    public FlowXResponse<Void> markAsRead(@PathVariable Long id) {
         log.info("Marking notification as read - ID: {}", id);
         notificationService.markAsRead(id);
         return FlowXResponse.<Void>builder()
@@ -123,9 +119,7 @@ public class NotificationController {
             }
     )
     @PutMapping("/{id}/mark-unread")
-    public FlowXResponse<Void> markAsUnread(
-            @Parameter(description = "Notification ID", required = true)
-            @PathVariable Long id) {
+    public FlowXResponse<Void> markAsUnread(@PathVariable Long id) {
         log.info("Marking notification as unread - ID: {}", id);
         notificationService.markAsUnread(id);
         return FlowXResponse.<Void>builder()

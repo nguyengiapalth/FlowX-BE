@@ -7,6 +7,8 @@ public enum ContentTargetType {
     PROJECT,
     DEPARTMENT,
     GLOBAL,
+    TASK,
+    TASK1
     ;
 }
 
