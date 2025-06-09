@@ -1,4 +1,4 @@
-package project.ii.flowx.model.dto.department;
+package project.ii.flowx.model.dto.project;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -6,18 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
-
-@Schema(description = "Department Response")
+@Schema(description = "Project Background Update Request")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DepartmentResponse {
-    Long id;
-    String name;
-    String description;
+public class ProjectBackgroundUpdateRequest {
+    @Schema(description = "Background image URL of the project", example = "https://example.com/project-bg.jpg")
     String background;
-    Instant createdAt;
-    Instant updatedAt;
-}
+} 

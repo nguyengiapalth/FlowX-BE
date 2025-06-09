@@ -21,6 +21,9 @@ public class UserUpdateRequest {
     @Schema(description = "Avatar URL of the user", example = "https://example.com/avatar.jpg")
     String avatar;
 
+    @Schema(description = "Background image URL of the user", example = "https://example.com/background.jpg")
+    String background;
+
     @Schema(description = "Phone number of the user", example = "+1234567890")
     String phoneNumber;
 

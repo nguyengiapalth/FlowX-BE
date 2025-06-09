@@ -18,9 +18,12 @@ public class GoogleTokenVerifier {
     private String clientId;
 
     public GoogleIdToken.Payload verify(String idTokenString) throws GeneralSecurityException, IOException {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
-                .setAudience(Collections.singletonList(clientId))
-                .build();
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(),
+                JacksonFactory.getDefaultInstance()
+        )
+        .setAudience(Collections.singletonList(clientId))
+        .build();
 
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {

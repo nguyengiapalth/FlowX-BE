@@ -55,6 +55,9 @@ public class Content {
     @Column(name = "depth", nullable = false)
     int depth;
 
+    @Column(name = "has_file", nullable = false)
+    boolean hasFile;
+
     @CreationTimestamp
     @Column(name = "created_at")
     Instant createdAt;

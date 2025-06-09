@@ -9,7 +9,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.file.*;
@@ -22,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api/file")
+@RequestMapping("api")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
@@ -47,7 +49,7 @@ public class FileController {
                     )
             }
     )
-    @GetMapping("/presigned-download/{fileId}")
+    @GetMapping("/file/presigned-download/{fileId}")
     public FlowXResponse<String> getPresignedDownloadUrl(@PathVariable Long fileId) {
         log.info("Generate presigned download URL request for file ID: {}", fileId);
         String presignedUrl = fileService.getPresignedDownloadUrl(fileId);
@@ -73,13 +75,44 @@ public class FileController {
                     )
             }
     )
-    @PostMapping("/presigned-upload")
+    @PostMapping("/file/presigned-upload")
     public FlowXResponse<PresignedUploadResponse> getPresignedUploadUrl(@Valid @RequestBody FileCreateRequest request) {
         log.info("Generate presigned upload URL request for file: {}", request.getName());
         return FlowXResponse.<PresignedUploadResponse>builder()
                 .code(200)
                 .message("Presigned upload URL generated successfully")
                 .data(fileService.getPresignedUploadUrl(request))
+                .build();
+    }
+
+    @Operation(
+            summary = "Get presigned URL for image upload",
+            description = "Generates a presigned URL for uploading an image directly to MinIO. Used for avatars and backgrounds.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Presigned URL generated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid request data"
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "User not authenticated"
+                    )
+            }
+    )
+    @PostMapping("/upload/image/presigned")
+    public FlowXResponse<PresignedResponse> getPresignedUrlForImage(@RequestParam("fileName") String fileName) {
+        log.info("Generate presigned upload URL for image: {}", fileName);
+        
+        PresignedResponse response = fileService.getPresignedUploadUrlForImage(fileName);
+        
+        return FlowXResponse.<PresignedResponse>builder()
+                .code(200)
+                .message("Presigned URL generated successfully")
+                .data(response)
                 .build();
     }
 
@@ -97,7 +130,7 @@ public class FileController {
                     )
             }
     )
-    @DeleteMapping("/{fileId}")
+    @DeleteMapping("/file/{fileId}")
     public FlowXResponse<Void> deleteFile(
             @Parameter(description = "File ID", required = true)
             @PathVariable Long fileId)
@@ -127,7 +160,7 @@ public class FileController {
                     )
             }
     )
-    @GetMapping("/{fileId}")
+    @GetMapping("/file/{fileId}")
     public FlowXResponse<FileResponse> getFileInfo(
             @PathVariable Long fileId)
     {
@@ -153,13 +186,13 @@ public class FileController {
                     )
             }
     )
-    @GetMapping("/entity/{entityType}/{entityId}")
-    public FlowXResponse<List<FileResponse>> getFilesByEntity(@PathVariable FileTargetType fileTargetType, @PathVariable Long entityId)
+    @GetMapping("/file/entity/{entityType}/{entityId}")
+    public FlowXResponse<List<FileResponse>> getFilesByEntity(@PathVariable FileTargetType fileTargetType, @PathVariable Long targetId)
     {
 
-        log.info("Get files by entity request - Type: {}, ID: {}", fileTargetType, entityId);
+        log.info("Get files by entity request - Type: {}, ID: {}", fileTargetType, targetId);
         
-        List<FileResponse> files = fileService.getFilesByEntity(fileTargetType, entityId);
+        List<FileResponse> files = fileService.getFilesByEntity(fileTargetType, targetId);
         
         return FlowXResponse.<List<FileResponse>>builder()
                 .code(200)
@@ -178,7 +211,7 @@ public class FileController {
                     )
             }
     )
-    @GetMapping("/my-files")
+    @GetMapping("/file/my-files")
     public FlowXResponse<List<FileResponse>> getMyFiles() {
         log.info("Get my files request");
         List<FileResponse> files = fileService.getMyFiles();
@@ -203,7 +236,7 @@ public class FileController {
                     )
             }
     )
-    @DeleteMapping("/batch")
+    @DeleteMapping("/file/batch")
     public FlowXResponse<Map<String, Object>> batchDeleteFiles(
             @Valid @RequestBody BatchDeleteRequest request) {
 

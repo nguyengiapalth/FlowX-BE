@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -19,6 +20,7 @@ import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.repository.UserRoleRepository;
 import project.ii.flowx.model.mapper.UserRoleMapper;
+import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.RoleScope;
 
 import java.util.List;
@@ -36,6 +38,17 @@ public class UserRoleService {
     public List<UserRoleResponse> getRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
         log.info("User roles for user with id {} : {}", userId, userRoles);
+        return userRoleMapper.toUserRoleResponseList(userRoles);
+    }
+
+    @Transactional(readOnly = true)
+//    @PreAuthorize("isAuthenticated()")
+    public List<UserRoleResponse> getMyRoles() {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
+
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 

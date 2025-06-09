@@ -4,6 +4,10 @@ package project.ii.flowx.model.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import project.ii.flowx.applications.service.helper.MinioService;
 import project.ii.flowx.model.dto.user.UserCreateRequest;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.dto.user.UserUpdateRequest;
@@ -16,7 +20,13 @@ import java.util.List;
  * This interface uses MapStruct to generate the implementation at compile time.
  */
 @Mapper(componentModel = "spring")
-public interface UserMapper {
+public abstract class UserMapper {
+
+    @Autowired
+    protected MinioService minioService;
+    
+    @Value("${minio.bucket-name}")
+    protected String bucketName;
 
         /**
          * Converts a User entity to a UserResponse DTO.
@@ -24,12 +34,31 @@ public interface UserMapper {
          * @param user the User entity to convert
          * @return the converted UserResponse DTO
          */
-        @Mapping(target = "departmentId", source = "department.id")
-        UserResponse toUserResponse(User user);
+        @Mapping(target = "department", source = "department")
+        @Mapping(target = "avatar", source = "avatar", qualifiedByName = "objectKeyToUrl")
+        @Mapping(target = "background", source = "background", qualifiedByName = "objectKeyToUrl")
+        public abstract UserResponse toUserResponse(User user);
 
-        User toUser(UserCreateRequest userCreateRequest);
+        public abstract User toUser(UserCreateRequest userCreateRequest);
 
-        void updateUserFromRequest(@MappingTarget User user, UserUpdateRequest userUpdateRequest);
+        public abstract void updateUserFromRequest(@MappingTarget User user, UserUpdateRequest userUpdateRequest);
 
-        List<UserResponse> toUserResponseList(List<User> users);
+        public abstract List<UserResponse> toUserResponseList(List<User> users);
+
+        @Named("objectKeyToUrl")
+        protected String objectKeyToUrl(String objectKey) {
+            if (objectKey == null || objectKey.trim().isEmpty()) {
+                return null;
+            }
+            
+            try {
+                String url = minioService.getPresignedDownloadUrlFromObjectKey(objectKey, 3600 * 24); // 24 hours expiry
+                System.out.println("Converting objectKey: " + objectKey + " to URL: " + (url != null ? "SUCCESS" : "FAILED"));
+                return url;
+            } catch (Exception e) {
+                // Log error and return null
+                System.err.println("Error generating presigned URL for objectKey: " + objectKey + ", error: " + e.getMessage());
+                return null;
+            }
+        }
 }

@@ -21,6 +21,7 @@ public class ProjectResponse {
     Long id;
     String name;
     String description;
+    String background;
     LocalDate startDate;
     LocalDate endDate;
     DepartmentResponse department;

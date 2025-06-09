@@ -29,6 +29,9 @@ public class Department {
     @Column(name = "description", length = Integer.MAX_VALUE)
     String description;
 
+    @Column(name = "background")
+    String background;
+
     @CreationTimestamp
     @Column(name = "created_at")
     Instant createdAt;

@@ -24,6 +24,9 @@ public class ProjectUpdateRequest {
     @Schema(description = "Description of the project", example = "A project to develop the FlowX application")
     String description;
 
+    @Schema(description = "Background image URL of the project", example = "https://example.com/project-bg.jpg")
+    String background;
+
     @Schema(description = "Start date of the project", example = "2023-01-01")
     LocalDate startDate;
 

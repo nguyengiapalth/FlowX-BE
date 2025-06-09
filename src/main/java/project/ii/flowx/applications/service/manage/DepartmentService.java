@@ -13,6 +13,7 @@ import project.ii.flowx.model.repository.DepartmentRepository;
 import project.ii.flowx.model.dto.department.DepartmentCreateRequest;
 import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.model.dto.department.DepartmentUpdateRequest;
+import project.ii.flowx.model.dto.department.DepartmentBackgroundUpdateRequest;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.DepartmentMapper;
@@ -78,5 +79,20 @@ public class DepartmentService {
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
         departmentRepository.delete(department);
         log.debug("Deleted department with id: {}", id);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+    @CacheEvict(value = "departments", allEntries = true)
+    public DepartmentResponse updateDepartmentBackground(Long id, DepartmentBackgroundUpdateRequest request) {
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
+        
+        if (request.getBackground() != null) {
+            department.setBackground(request.getBackground());
+            log.info("Updated background for department {}", id);
+        }
+        
+        department = departmentRepository.save(department);
+        return departmentMapper.toDepartmentResponse(department);
     }
 }

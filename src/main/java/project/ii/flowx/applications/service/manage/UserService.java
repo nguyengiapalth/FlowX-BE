@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +16,13 @@ import project.ii.flowx.model.entity.Department;
 import project.ii.flowx.model.dto.user.UserCreateRequest;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.dto.user.UserUpdateRequest;
+import project.ii.flowx.model.dto.user.UserAvatarUpdateRequest;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.UserMapper;
 import project.ii.flowx.model.repository.UserRepository;
+import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.UserStatus;
 
 import java.util.List;
@@ -118,6 +121,42 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse getMyProfile() {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        log.info("User id: {}, user name: {}", userId, userPrincipal.getUsername());
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        log.info("user found: {}", user);
+
+        return userMapper.toUserResponse(user);
+    }
+
+    @Transactional
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse updateMyProfile(UserUpdateRequest userUpdateRequest) {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        log.info("Updating profile for user id: {}, user name: {}", userId, userPrincipal.getUsername());
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        userMapper.updateUserFromRequest(user, userUpdateRequest);
+        userRepository.save(user);
+
+        log.info("Profile updated for user: {}", user.getId());
+
+        // Get fresh profile data after update
+        return getMyProfile();
+    }
+
+    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAll();
@@ -136,6 +175,104 @@ public class UserService {
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         return userMapper.toUserResponse(user);
+    }
+
+    @Transactional
+    @PreAuthorize("#id == authentication.principal.id or hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+    public UserResponse updateUserAvatarAndBackground(Long id, UserAvatarUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+        
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+            log.info("Updated avatar for user {}", id);
+        }
+        
+        if (request.getBackground() != null) {
+            user.setBackground(request.getBackground());
+            log.info("Updated background for user {}", id);
+        }
+        
+        userRepository.save(user);
+        
+        // Check if this is current user updating their own profile
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (userPrincipal.getId().equals(id)) {
+            // Get fresh profile data after update for current user
+            return getMyProfile();
+        }
+        
+        // For admin updating other users, return mapped response
+        return userMapper.toUserResponse(user);
+    }
+
+    @Transactional
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse updateMyAvatarAndBackground(UserAvatarUpdateRequest request) {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        log.info("Updating avatar/background for user id: {}", userId);
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        if (request.getAvatar() != null) {
+            user.setAvatar(request.getAvatar());
+            log.info("Updated avatar for current user {}", userId);
+        }
+        
+        if (request.getBackground() != null) {
+            user.setBackground(request.getBackground());
+            log.info("Updated background for current user {}", userId);
+        }
+
+        userRepository.save(user);
+
+        log.info("Avatar/background updated for user: {}", user.getId());
+
+        // Get fresh profile data after update
+        return getMyProfile();
+    }
+
+    @Transactional
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse updateMyAvatar(String avatar) {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        log.info("Updating avatar for user id: {}", userId);
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        user.setAvatar(avatar);
+        userRepository.save(user);
+
+        log.info("Avatar updated for user: {}", user.getId());
+
+        // Get fresh profile data after update
+        return getMyProfile();
+    }
+
+    @Transactional
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse updateMyBackground(String background) {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
+        log.info("Updating background for user id: {}", userId);
+
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        user.setBackground(background);
+        userRepository.save(user);
+
+        log.info("Background updated for user: {}", user.getId());
+
+        // Get fresh profile data after update
+        return getMyProfile();
     }
 }
 

@@ -184,4 +184,30 @@ public class ContentController {
                 .code(200)
                 .build();
     }
+
+    @Operation(
+            summary = "Update hasFile flag for content",
+            description = "Updates the hasFile flag based on actual files associated with the content. This should be called after uploading or deleting files.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the content")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "HasFile flag updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Content not found"
+                    )
+            }
+    )
+    @PutMapping("/{id}/sync-files")
+    public FlowXResponse<Void> syncContentFiles(@PathVariable Long id) {
+        contentService.updateHasFileFlag(id);
+        return FlowXResponse.<Void>builder()
+                .message("Content files synchronized successfully")
+                .code(200)
+                .build();
+    }
 }

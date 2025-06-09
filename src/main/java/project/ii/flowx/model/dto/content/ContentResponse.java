@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.dto.file.FileResponse;
 import project.ii.flowx.shared.enums.ContentTargetType;
 
 import java.time.Instant;
@@ -26,4 +27,10 @@ public class ContentResponse {
     Instant updatedAt;
     List<ContentResponse> replies;
     private Long id;
+    
+    @Schema(description = "Indicates if content has attached files")
+    boolean hasFile;
+    
+    @Schema(description = "List of attached files")
+    List<FileResponse> files;
 }

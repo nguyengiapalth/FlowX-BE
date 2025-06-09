@@ -28,6 +28,8 @@ import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.auth.AuthenticationRequest;
 import project.ii.flowx.model.dto.auth.AuthenticationResponse;
 import project.ii.flowx.model.dto.auth.LogoutRequest;
+import project.ii.flowx.model.dto.auth.RefreshTokenRequest;
+import project.ii.flowx.model.dto.auth.RefreshTokenResponse;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
 import project.ii.flowx.model.repository.UserRepository;
 import project.ii.flowx.security.UserDetailsServiceImpl;
@@ -57,8 +59,18 @@ public class AuthenticationService {
     @Value("${spring.jwt.refresh-expiration}")
     long refreshExpiration;
 
+    public static class AuthenticationResult {
+        public final AuthenticationResponse response;
+        public final String refreshToken;
+        
+        public AuthenticationResult(AuthenticationResponse response, String refreshToken) {
+            this.response = response;
+            this.refreshToken = refreshToken;
+        }
+    }
+
     @Transactional(readOnly = true)
-    public AuthenticationResponse authenticate(AuthenticationRequest authenticationRequest) {
+    public AuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         try {
             log.info("Authentication request for user {}", authenticationRequest.getEmail());
 
@@ -74,11 +86,14 @@ public class AuthenticationService {
 
             UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
             String token = generateToken(userPrincipal);
+            String refreshToken = generateRefreshToken(userPrincipal);
 
-            return AuthenticationResponse.builder()
+            AuthenticationResponse response = AuthenticationResponse.builder()
                     .token(token)
                     .authenticated(true)
                     .build();
+
+            return new AuthenticationResult(response, refreshToken);
         } catch (BadCredentialsException e) {
             log.warn("Sai mật khẩu cho user {}", authenticationRequest.getEmail());
             throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
@@ -88,7 +103,7 @@ public class AuthenticationService {
         }
     }
 
-    public AuthenticationResponse authenticateByGoogleOAuth2(String email) {
+    public AuthenticationResult authenticateByGoogleOAuth2(String email) {
         if(!userRepository.existsByEmail(email))
             throw new FlowXException(FlowXError.NOT_FOUND, "User not found with email: " + email);
 
@@ -98,19 +113,61 @@ public class AuthenticationService {
                 userDetails, null, userDetails.getAuthorities());
 
         String token = generateToken((UserPrincipal) userDetails);
+        String refreshToken = generateRefreshToken((UserPrincipal) userDetails);
         log.info("Authentication request for user {}", email);
         log.info("Authorities: {}", userDetails.getAuthorities());
 
-        return AuthenticationResponse.builder()
+        AuthenticationResponse response = AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
                 .build();
+
+        return new AuthenticationResult(response, refreshToken);
     }
 
 
-//    public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-//
-//    }
+    @Transactional(readOnly = true)
+    public RefreshTokenResponse refreshToken(String refreshTokenString) {
+        try {
+            // Verify refresh token
+            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
+                    .build()
+                    .verify(refreshTokenString);
+
+            // Check if token is invalidated
+            if (invalidTokenRepository.existsByToken(refreshTokenString)) {
+                throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token is invalidated");
+            }
+
+            // Extract user information from refresh token
+            Long userId = decodedJWT.getClaim("userId").asLong();
+            String email = decodedJWT.getSubject();
+            String scope = decodedJWT.getClaim("scope").asString();
+
+            // Load user details
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            UserPrincipal userPrincipal = (UserPrincipal) userDetails;
+
+            // Generate new tokens
+            String newAccessToken = generateToken(userPrincipal);
+            String newRefreshToken = generateRefreshToken(userPrincipal);
+
+            // Invalidate old refresh token
+            InvalidToken invalidToken = new InvalidToken();
+            invalidToken.setToken(refreshTokenString);
+            invalidTokenRepository.save(invalidToken);
+
+            return RefreshTokenResponse.builder()
+                    .token(newAccessToken)
+                    .refreshToken(newRefreshToken)
+                    .build();
+
+        } catch (JWTVerificationException e) {
+            throw new FlowXException(FlowXError.UNAUTHORIZED, "Invalid refresh token");
+        } catch (Exception e) {
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Error refreshing token");
+        }
+    }
 
     @Transactional
     public void logout(LogoutRequest request) {

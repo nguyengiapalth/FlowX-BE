@@ -15,6 +15,7 @@ import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.project.ProjectCreateRequest;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.project.ProjectUpdateRequest;
+import project.ii.flowx.model.dto.project.ProjectBackgroundUpdateRequest;
 import project.ii.flowx.shared.enums.ProjectStatus;
 
 import java.util.List;
@@ -230,6 +231,35 @@ public class ProjectController {
         return FlowXResponse.<List<ProjectResponse>>builder()
                 .data(projectService.getProjectsByDepartmentId(departmentId))
                 .message("List of projects retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update project background",
+            description = "Updates the background image of a project.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the project to be updated")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Project background updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Project not found"
+                    )
+            }
+    )
+    @PutMapping("/update-background/{id}")
+    public FlowXResponse<ProjectResponse> updateProjectBackground(
+            @PathVariable Long id,
+            @RequestBody ProjectBackgroundUpdateRequest request) {
+
+        return FlowXResponse.<ProjectResponse>builder()
+                .data(projectService.updateProjectBackground(id, request))
+                .message("Project background updated successfully")
                 .code(200)
                 .build();
     }

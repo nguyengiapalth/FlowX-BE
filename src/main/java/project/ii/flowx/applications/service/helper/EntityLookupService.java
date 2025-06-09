@@ -60,7 +60,6 @@ public class EntityLookupService {
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Notification not found"));
     }
 
-    @Cacheable(value = "projectMemberById", key = "#id")
     public ProjectMember getProjectMemberById(Long id) {
         return projectMemberRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project member not found"));

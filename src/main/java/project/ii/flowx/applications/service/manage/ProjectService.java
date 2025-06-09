@@ -14,6 +14,7 @@ import project.ii.flowx.model.repository.ProjectRepository;
 import project.ii.flowx.model.dto.project.ProjectCreateRequest;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.project.ProjectUpdateRequest;
+import project.ii.flowx.model.dto.project.ProjectBackgroundUpdateRequest;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.ProjectMapper;
@@ -131,5 +132,20 @@ public class ProjectService {
         List<Project> projects = projectRepository.findByStatus(status);
         log.info("Projects found with status {} : {}", status, projects);
         return projectMapper.toProjectResponseList(projects);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
+    public ProjectResponse updateProjectBackground(Long id, ProjectBackgroundUpdateRequest request) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
+        
+        if (request.getBackground() != null) {
+            project.setBackground(request.getBackground());
+            log.info("Updated background for project {}", id);
+        }
+        
+        project = projectRepository.save(project);
+        return projectMapper.toProjectResponse(project);
     }
 }

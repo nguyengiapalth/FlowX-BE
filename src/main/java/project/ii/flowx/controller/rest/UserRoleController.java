@@ -23,7 +23,7 @@ import java.util.List;
 @Slf4j
 @CrossOrigin(origins = "*")
 @Tag(name = "User Role", description = "User Role API")
-@SecurityRequirement(name = "bearerAuth")
+//@SecurityRequirement(name = "bearerAuth")
 public class UserRoleController {
     UserRoleService userRoleService;
 
@@ -99,6 +99,26 @@ public class UserRoleController {
         return FlowXResponse.<List<UserRoleResponse>>builder()
                 .data(userRoleService.getNonGlobalRolesForUser(userId))
                 .message("Local roles retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @GetMapping("my-roles")
+    @Operation(
+            summary = "Get my roles",
+            description = "Retrieves all roles assigned to the current user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Roles retrieved successfully"
+                    )
+            }
+    )
+    public FlowXResponse<List<UserRoleResponse>> getMyRoles() {
+        log.info("Fetching roles for the current user");
+        return FlowXResponse.<List<UserRoleResponse>>builder()
+                .data(userRoleService.getMyRoles())
+                .message("My roles retrieved successfully")
                 .code(200)
                 .build();
     }

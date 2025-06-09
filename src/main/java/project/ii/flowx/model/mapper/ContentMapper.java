@@ -23,6 +23,8 @@ public interface ContentMapper {
     Content toContent(ContentCreateRequest request);
 
     @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "hasFile", ignore = true)
+    @Mapping(target = "files", ignore = true)
     ContentResponse toContentResponse(Content content);
 
     void updateContentFromRequest(@MappingTarget Content content, ContentUpdateRequest request);

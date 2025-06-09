@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.dto.userrole.UserRoleResponse;
 
@@ -17,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class UserPrincipal implements OAuth2User, UserDetails {
+public class UserPrincipal implements UserDetails {
     @Getter
     private final Long id;
     private final String email;
@@ -113,15 +112,5 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
-    }
-
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
-
-    @Override
-    public String getName() {
-        return String.valueOf(id);
     }
 }

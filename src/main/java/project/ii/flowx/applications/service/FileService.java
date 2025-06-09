@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.applications.service.helper.MinioService;
 import project.ii.flowx.exceptionhandler.FlowXError;
@@ -147,6 +148,29 @@ public class FileService {
         }
 
         return fileRepository.findByFileStatusAndCreatedAtBefore(fileStatus, cutoff);
+    }
+
+
+
+    /**
+     * Get presigned upload URL for image without creating File record
+     * Used for simple uploads like avatars/backgrounds
+     */
+    public PresignedResponse getPresignedUploadUrlForImage(String fileName) {
+        try {
+            // Validate authentication - temporarily commented for testing
+            // getCurrentUserId(); // This will throw if not authenticated
+            
+            PresignedResponse response = minioService.getPresignedUploadUrlSimple(fileName);
+            
+            log.info("Generated presigned upload URL for image: {}", fileName);
+            return response;
+            
+        } catch (Exception e) {
+            log.error("Error generating presigned upload URL for image: {}", e.getMessage());
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
+                    "Failed to generate presigned upload URL: " + e.getMessage());
+        }
     }
 
     // heper method

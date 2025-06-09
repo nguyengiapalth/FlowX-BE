@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.shared.enums.UserStatus;
 
 import java.time.Instant;
@@ -20,6 +21,7 @@ public class UserResponse {
     String email;
     String fullName;
     String avatar;
+    String background;
 
     String phoneNumber;
     LocalDate dateOfBirth;
@@ -27,8 +29,7 @@ public class UserResponse {
 
     String position;
     LocalDate joinDate;
-//    DepartmentResponse department;
-    Long departmentId;
+    DepartmentResponse department;
 
     Instant createdAt;
     Instant updatedAt;

@@ -10,11 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.file.PresignedResponse;
 import project.ii.flowx.model.entity.File;
 
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -144,6 +146,114 @@ public class MinioService {
         }
     }
 
+
+
+    /**
+     * Generate presigned upload URL for simple uploads (images only)
+     * Does not create File record - used for avatars/backgrounds
+     */
+    public PresignedResponse getPresignedUploadUrlSimple(String fileName) {
+        try {
+            // Ensure bucket exists
+            ensureBucketExists();
+
+            // Generate unique object key
+            String objectKey = generateObjectName(fileName);
+
+            // Generate presigned URL for upload
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .expiry(presignedExpiry, TimeUnit.SECONDS)
+                            .build()
+            );
+
+            log.info("Generated simple presigned upload URL for file: {}", fileName);
+            return PresignedResponse.builder()
+                    .url(presignedUrl)
+                    .bucket(bucketName)
+                    .objectKey(objectKey)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error generating simple presigned upload URL: {}", e.getMessage());
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
+                    "Failed to generate upload URL: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate presigned upload URL for cropped avatar (optimized for avatars)
+     */
+    public PresignedResponse getPresignedUploadUrlForAvatar(String fileName) {
+        try {
+            // Ensure bucket exists
+            ensureBucketExists();
+
+            // Generate unique object key specifically for avatars
+            String objectKey = generateAvatarObjectName(fileName);
+
+            // Generate presigned URL for upload
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .expiry(presignedExpiry, TimeUnit.SECONDS)
+                            .build()
+            );
+
+            log.info("Generated presigned upload URL for avatar: {}", fileName);
+            return PresignedResponse.builder()
+                    .url(presignedUrl)
+                    .bucket(bucketName)
+                    .objectKey(objectKey)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error generating presigned upload URL for avatar: {}", e.getMessage());
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
+                    "Failed to generate avatar upload URL: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Generate presigned upload URL for cropped background (optimized for backgrounds)
+     */
+    public PresignedResponse getPresignedUploadUrlForBackground(String fileName) {
+        try {
+            // Ensure bucket exists
+            ensureBucketExists();
+
+            // Generate unique object key specifically for backgrounds
+            String objectKey = generateBackgroundObjectName(fileName);
+
+            // Generate presigned URL for upload
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.PUT)
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .expiry(presignedExpiry, TimeUnit.SECONDS)
+                            .build()
+            );
+
+            log.info("Generated presigned upload URL for background: {}", fileName);
+            return PresignedResponse.builder()
+                    .url(presignedUrl)
+                    .bucket(bucketName)
+                    .objectKey(objectKey)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error generating presigned upload URL for background: {}", e.getMessage());
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
+                    "Failed to generate background upload URL: " + e.getMessage());
+        }
+    }
+
     private void ensureBucketExists() {
         try {
             boolean exists = minioClient.bucketExists(
@@ -174,9 +284,54 @@ public class MinioService {
             extension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
 
-        return uuid + "_" + timestamp;  // + "_" + originalFileName;
+        return uuid + "_" + timestamp + extension;
     }
 
+    /**
+     * Generate object name with specific prefix for avatars
+     */
+    private String generateAvatarObjectName(String originalFileName) {
+        String uuid = java.util.UUID.randomUUID().toString();
+        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        return "avatars/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped avatars
+    }
+
+    /**
+     * Generate object name with specific prefix for backgrounds
+     */
+    private String generateBackgroundObjectName(String originalFileName) {
+        String uuid = java.util.UUID.randomUUID().toString();
+        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        return "backgrounds/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped backgrounds
+    }
+
+
+    /**
+     * Generate presigned download URL from objectKey (for avatar/background display)
+     */
+    public String getPresignedDownloadUrlFromObjectKey(String objectKey, int presignedExpiryTime) {
+        if (objectKey == null || objectKey.trim().isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Generate presigned URL for download
+            String presignedUrl = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(bucketName)
+                            .object(objectKey)
+                            .expiry(Math.max(presignedExpiry, presignedExpiryTime), TimeUnit.SECONDS)
+                            .build()
+            );
+            log.debug("Generated presigned download URL for objectKey: {}", objectKey);
+            return presignedUrl;
+
+        } catch (Exception e) {
+            log.error("Error generating presigned download URL for objectKey {}: {}", objectKey, e.getMessage());
+            return null;
+        }
+    }
 
     private String calculateHash(byte[] data) {
         try {

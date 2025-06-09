@@ -39,6 +39,9 @@ public class User {
     @Column(name = "avatar")
     String avatar;
 
+    @Column(name = "background")
+    String background;
+
     @Column(name = "phone_number", length = 20)
     String phoneNumber;
 

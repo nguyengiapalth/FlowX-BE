@@ -15,6 +15,7 @@ import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.user.UserCreateRequest;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.dto.user.UserUpdateRequest;
+import project.ii.flowx.model.dto.user.UserAvatarUpdateRequest;
 import project.ii.flowx.applications.service.manage.UserService;
 import project.ii.flowx.shared.enums.UserStatus;
 
@@ -159,6 +160,117 @@ public class UserController {
     }
 
     @Operation(
+            summary = "Get my profile",
+            description = "Retrieves the profile of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "User profile retrieved successfully"
+                    )
+            }
+    )
+    @GetMapping("/my-profile")
+    public FlowXResponse<UserResponse> getMyProfile() {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.getMyProfile())
+                .message("User profile retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update my profile",
+            description = "Updates the profile of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "User profile updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/my-profile")
+    public FlowXResponse<UserResponse> updateMyProfile(@RequestBody UserUpdateRequest userUpdateRequest) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateMyProfile(userUpdateRequest))
+                .message("User profile updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update my avatar and background",
+            description = "Updates the avatar and/or background of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Avatar/background updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/my-avatar-background")
+    public FlowXResponse<UserResponse> updateMyAvatarAndBackground(@RequestBody UserAvatarUpdateRequest request) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateMyAvatarAndBackground(request))
+                .message("Avatar and background updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update my avatar",
+            description = "Updates the avatar of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Avatar updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/my-avatar")
+    public FlowXResponse<UserResponse> updateMyAvatar(@RequestBody String avatar) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateMyAvatar(avatar))
+                .message("Avatar updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update my background",
+            description = "Updates the background of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Background updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/my-background")
+    public FlowXResponse<UserResponse> updateMyBackground(@RequestBody String background) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateMyBackground(background))
+                .message("Background updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
             summary = "Get all users",
             description = "Retrieves a list of all users in the system.",
             responses = {
@@ -222,6 +334,32 @@ public class UserController {
         return FlowXResponse.<UserResponse>builder()
                 .data(userService.getUserById(id))
                 .message("User retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Update user avatar and background",
+            description = "Updates the avatar and/or background image of a user.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the user to be updated")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Avatar/background updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/update-avatar/{id}")
+    public FlowXResponse<UserResponse> updateUserAvatarAndBackground(@PathVariable Long id, @RequestBody UserAvatarUpdateRequest request) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateUserAvatarAndBackground(id, request))
+                .message("Avatar and background updated successfully")
                 .code(200)
                 .build();
     }
