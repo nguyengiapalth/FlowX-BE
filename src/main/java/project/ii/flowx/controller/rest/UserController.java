@@ -136,6 +136,33 @@ public class UserController {
     }
 
     @Operation(
+            summary = "Update user position",
+            description = "Updates the position of a specific user.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the user to be updated"),
+                    @Parameter(name = "position", description = "New position for the user")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "User position updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    @PutMapping("/update-position/{id}")
+    public FlowXResponse<UserResponse> updateUserPosition(@PathVariable Long id, @RequestParam String position) {
+        return FlowXResponse.<UserResponse>builder()
+                .data(userService.updateUserPosition(id, position))
+                .message("User position updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
             summary = "delete user",
             description = "Deletes a user by their unique ID.",
             responses = {

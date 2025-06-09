@@ -3,9 +3,9 @@ package project.ii.flowx.applications.events;
 
 
 public class ContentEvent {
-    public record ContentCreatedEvent(long contentId, String title, String description, String contentType, long userId) {}
+    public record ContentCreatedEvent(long contentId, String description, String contentType, long userId) {}
 
-    public record ContentUpdatedEvent(long contentId, String title, String description, String contentType) {}
+    public record ContentUpdatedEvent(long contentId, String description, String contentType) {}
 
     public record ContentDeletedEvent(long contentId) {}
 

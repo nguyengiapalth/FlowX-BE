@@ -40,7 +40,7 @@ public class DepartmentController {
                     )
             }
     )
-    @GetMapping("/getall")
+    @GetMapping("/get-all")
     public FlowXResponse<List<DepartmentResponse>> getAllDepartments() {
         return FlowXResponse.<List<DepartmentResponse>>builder()
                 .data(departmentService.getAllDepartments())

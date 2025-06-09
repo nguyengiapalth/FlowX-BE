@@ -42,7 +42,7 @@ public class UserRoleService {
     }
 
     @Transactional(readOnly = true)
-//    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()")
     public List<UserRoleResponse> getMyRoles() {
         UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long userId = userPrincipal.getId();

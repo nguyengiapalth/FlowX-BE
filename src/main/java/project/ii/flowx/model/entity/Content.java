@@ -29,9 +29,6 @@ public class Content {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false, length = 255)
-    String title;
-
     @Column(columnDefinition = "TEXT")
     String body;
 

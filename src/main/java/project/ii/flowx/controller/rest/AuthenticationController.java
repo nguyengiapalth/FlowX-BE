@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.auth.AuthenticationService;
 import project.ii.flowx.applications.service.auth.AuthenticationService.AuthenticationResult;
+import project.ii.flowx.applications.service.auth.PasswordResetService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.FlowXResponse;
@@ -20,6 +21,8 @@ import project.ii.flowx.model.dto.auth.AuthenticationResponse;
 import project.ii.flowx.model.dto.auth.LogoutRequest;
 import project.ii.flowx.model.dto.auth.ChangePasswordRequest;
 import project.ii.flowx.model.dto.auth.RefreshTokenResponse;
+import project.ii.flowx.model.dto.auth.ForgotPasswordRequest;
+import project.ii.flowx.model.dto.auth.ResetPasswordRequest;
 import project.ii.flowx.security.GoogleTokenVerifier;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,6 +38,7 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Authentication API")
 public class AuthenticationController {
     AuthenticationService authenticationService;
+    PasswordResetService passwordResetService;
     GoogleTokenVerifier googleTokenVerifier;
 
     @PostMapping("/login")
@@ -157,6 +161,52 @@ public class AuthenticationController {
                 .data(authResponse)
                 .code(200)
                 .message("Token refreshed successfully")
+                .build();
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(
+            summary = "Request password reset",
+            description = "Sends a password reset email to the user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200", 
+                            description = "Password reset email sent successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "User not found"
+                    )
+            }
+    )
+    public FlowXResponse<Void> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        passwordResetService.sendPasswordResetEmail(request);
+        return FlowXResponse.<Void>builder()
+                .code(200)
+                .message("Nếu email tồn tại trong hệ thống, một email đặt lại mật khẩu đã được gửi")
+                .build();
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(
+            summary = "Reset password with token",
+            description = "Resets user password using the token received via email.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Password reset successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid token or password"
+                    )
+            }
+    )
+    public FlowXResponse<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return FlowXResponse.<Void>builder()
+                .code(200)
+                .message("Mật khẩu đã được đặt lại thành công")
                 .build();
     }
 

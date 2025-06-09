@@ -19,7 +19,7 @@ public interface ProjectMapper {
 
     ProjectResponse toProjectResponse(Project project);
 
-    @Mapping(target = "department.id", source = "departmentId")
+//    @Mapping(target = "department.id", source = "departmentId")
     Project toProject(ProjectCreateRequest projectCreateRequest);
 
     void updateProjectFromRequest(@MappingTarget Project project, ProjectUpdateRequest projectUpdateRequest);

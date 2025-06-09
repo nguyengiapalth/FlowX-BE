@@ -43,21 +43,25 @@ public class ContentService {
          User author = entityLookupService.getUserById(userId);
 
         Content content = contentMapper.toContent(request);
-        if (request.getParentId() != -1) {
+        if (request.getParentId() != -1 && request.getParentId() != 0) {
             Content parent = contentRepository.findById(request.getParentId())
                     .orElseThrow(() -> new IllegalArgumentException("Parent content not found"));
             if(parent.getDepth() >= 3){
                 content.setDepth(parent.getDepth());
                 content.setParent(parent.getParent());
             }
-            else content.setDepth(parent.getDepth() + 1);
+            else {
+                content.setDepth(parent.getDepth() + 1);
+                content.setParent(parent);
+            }
         } else {
             content.setDepth(0);
+            content.setParent(null);
         }
         content.setAuthor(author);
         content.setHasFile(false); // Will be updated later when files are uploaded
         
-        log.info("Creating content with title: {}", content.getTitle());
+        log.info("Creating content with body: {}", content.getBody());
         content = contentRepository.save(content);
         
         ContentResponse response = contentMapper.toContentResponse(content);
@@ -91,13 +95,24 @@ public class ContentService {
     @PreAuthorize( "hasAuthority('ROLE_MANAGER')")
     public List<ContentResponse> getAllContents() {
         List<Content> contents = contentRepository.findAll();
+        log.info("Found {} contents in database", contents.size());
+        
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
+        log.info("Mapped to {} content responses", responses.size());
+        
+        for (ContentResponse response : responses) {
+            log.info("Content ID: {}, ParentID: {}, Body: {}, Author: {}", 
+                response.getId(), response.getParentId(), 
+                response.getBody(), response.getAuthor() != null ? response.getAuthor().getFullName() : "null");
+        }
+        
         return populateFilesList(responses);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#targetId, #contentTargetType)")
     public List<ContentResponse> getContentsByTargetTypeAndId(ContentTargetType contentTargetType, Long targetId) {
+        log.info("Getting content by target type and id in database");
         List<Content> contents = contentRepository.findByContentTargetTypeAndTargetId(contentTargetType, targetId);
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
         return populateFilesList(responses);

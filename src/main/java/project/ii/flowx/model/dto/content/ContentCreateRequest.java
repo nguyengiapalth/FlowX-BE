@@ -16,9 +16,7 @@ import project.ii.flowx.shared.enums.ContentTargetType;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ContentCreateRequest {
-    @Schema(description = "Title of the content", example = "My First Post")
-    @NotNull
-    String title;
+
 
     @Schema(description = "Body or content details", example = "This is the main content of my post")
     String body;

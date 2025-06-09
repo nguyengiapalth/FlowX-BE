@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.ReactionType;
 
 import java.time.Instant;
@@ -21,11 +22,8 @@ public class ContentReactionResponse {
     @Schema(description = "Content ID", example = "1")
     Long contentId;
     
-    @Schema(description = "User ID", example = "1")
-    Long userId;
-    
-    @Schema(description = "Username", example = "john_doe")
-    String username;
+    @Schema(description = "User who made the reaction")
+    UserResponse user;
     
     @Schema(description = "Type of reaction", example = "LIKE")
     ReactionType reactionType;

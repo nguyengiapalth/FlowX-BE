@@ -8,7 +8,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.model.entity.Task;
+import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.repository.TaskRepository;
 import project.ii.flowx.model.dto.task.TaskCreateRequest;
 import project.ii.flowx.model.dto.task.TaskResponse;
@@ -29,6 +31,7 @@ import java.util.List;
 public class TaskService {
     TaskRepository taskRepository;
     TaskMapper taskMapper;
+    EntityLookupService entityLookupService;
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canCreateTask(#taskCreateRequest.targetId, #taskCreateRequest.targetType)")
@@ -36,10 +39,16 @@ public class TaskService {
         log.info("Creating new task");
         log.debug("Task create request: {}", taskCreateRequest);
 
+        // get user
+        Long userId = getUserId();
+        User user = entityLookupService.getUserById(userId);
+
+
         Task task = taskMapper.toTask(taskCreateRequest);
         task.setIsCompleted(false);
         if (task.getStatus() == null) task.setStatus(TaskStatus.TO_DO);
         if (task.getHasFiles() == null) task.setHasFiles(false);
+        task.setAssigner(user);
 
         task = taskRepository.save(task);
         log.info("Successfully created task with ID: {}", task.getId());

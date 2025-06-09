@@ -1,4 +1,4 @@
-package project.ii.flowx.applications.service.manage;
+package project.ii.flowx.applications.service.communicate;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

@@ -108,6 +108,16 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    @Transactional()
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+    public UserResponse updateUserPosition(Long id, String position) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+        user.setPosition(position);
+        user = userRepository.save(user);
+        return userMapper.toUserResponse(user);
+    }
+
     @Transactional
     @PreAuthorize("#id == authentication.principal.id or hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     public void deleteUser(Long id) {

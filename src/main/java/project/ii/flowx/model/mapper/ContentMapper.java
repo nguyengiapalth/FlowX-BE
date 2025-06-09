@@ -12,17 +12,19 @@ import java.util.List;
  * Mapper interface for converting between Content entity and Content DTOs.
  * This interface uses MapStruct to generate the implementation at compile time.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface ContentMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "parent", source = "parentId", qualifiedByName = "idToContent")
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "author", ignore = true)
     @Mapping(target = "replies", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Content toContent(ContentCreateRequest request);
 
-    @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "author", source = "author")
+    @Mapping(target = "parentId", source = "parent", qualifiedByName = "contentToParentId")
     @Mapping(target = "hasFile", ignore = true)
     @Mapping(target = "files", ignore = true)
     ContentResponse toContentResponse(Content content);
@@ -31,11 +33,9 @@ public interface ContentMapper {
 
     List<ContentResponse> toContentResponseList(List<Content> contents);
 
-    @Named("idToContent")
-    default Content idToContent(Long id) {
-        if (id == null) return null;
-        Content content = new Content();
-        content.setId(id);
-        return content;
+    @Named("contentToParentId")
+    default long contentToParentId(Content parent) {
+        if (parent == null) return -1;
+        return parent.getId();
     }
 }

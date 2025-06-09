@@ -46,7 +46,7 @@ public class ContentController {
     )
     @PostMapping("/create")
     public FlowXResponse<ContentResponse> createContent(@RequestBody ContentCreateRequest request) {
-        log.info("Creating content with title: {}", request.getTitle());
+        log.info("Creating content with body: {}", request.getBody());
         return FlowXResponse.<ContentResponse>builder()
                 .data(contentService.createContent(request))
                 .message("Content created successfully")

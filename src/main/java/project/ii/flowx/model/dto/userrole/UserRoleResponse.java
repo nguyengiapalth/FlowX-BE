@@ -22,5 +22,4 @@ public class UserRoleResponse {
     RoleResponse role;
     RoleScope scope;
     Long scopeId;
-    Instant createdAt;
 }

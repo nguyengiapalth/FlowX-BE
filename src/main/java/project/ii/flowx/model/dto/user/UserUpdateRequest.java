@@ -30,9 +30,6 @@ public class UserUpdateRequest {
     @Schema(description = "Address of the user", example = "123 Main St, City, Country")
     String address;
 
-    @Schema(description = "Position of the user", example = "Software Engineer")
-    String position;
-
     @Schema(description = "Status of the user", example = "ACTIVE")
     UserStatus status;
 

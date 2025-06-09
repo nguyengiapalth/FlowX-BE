@@ -28,15 +28,13 @@ public class DepartmentService {
     DepartmentRepository departmentRepository;
     DepartmentMapper departmentMapper;
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
-    @Cacheable(value = "departments", key = "'all'")
+    @PreAuthorize("isAuthenticated()")
     public List<DepartmentResponse> getAllDepartments() {
         log.debug("Fetching all departments from database");
         return departmentMapper.toDepartmentResponseList(departmentRepository.findAll());
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MEMBER', #id)")
-    @Cacheable(value = "departments", key = "#id")
     public DepartmentResponse getDepartmentById(Long id) {
         log.debug("Fetching department with id: {} from database", id);
         Department department = departmentRepository.findById(id)
@@ -45,7 +43,6 @@ public class DepartmentService {
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
-    @CacheEvict(value = "departments", allEntries = true)
     public DepartmentResponse createDepartment(DepartmentCreateRequest departmentCreateRequest) {
         log.debug("Creating new department: {}", departmentCreateRequest);
         Department department = departmentMapper.toDepartment(departmentCreateRequest);
@@ -55,7 +52,6 @@ public class DepartmentService {
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
-    @CacheEvict(value = "departments", allEntries = true)
     public DepartmentResponse updateDepartment(Long id, DepartmentUpdateRequest departmentUpdateRequest) {
         // validate new department name if provided
         if (departmentUpdateRequest.getName() != null && departmentRepository.existsByName(departmentUpdateRequest.getName())) {
@@ -72,7 +68,6 @@ public class DepartmentService {
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
-    @CacheEvict(value = "departments", allEntries = true)
     public void deleteDepartment(Long id) {
         log.debug("Deleting department with id: {}", id);
         Department department = departmentRepository.findById(id)
@@ -81,8 +76,7 @@ public class DepartmentService {
         log.debug("Deleted department with id: {}", id);
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    @CacheEvict(value = "departments", allEntries = true)
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
     public DepartmentResponse updateDepartmentBackground(Long id, DepartmentBackgroundUpdateRequest request) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));

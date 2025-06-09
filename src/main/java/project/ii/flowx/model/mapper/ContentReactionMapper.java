@@ -13,36 +13,19 @@ import java.util.List;
  * Mapper interface for converting between ContentReaction entity and ContentReaction DTOs.
  * This interface uses MapStruct to generate the implementation at compile time.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface ContentReactionMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "content", source = "contentId", qualifiedByName = "idToContent")
+    @Mapping(target = "content", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     ContentReaction toContentReaction(ContentReactionRequest request);
 
     @Mapping(target = "contentId", source = "content.id")
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "username", source = "user.fullName")
+    @Mapping(target = "user", source = "user")
     ContentReactionResponse toContentReactionResponse(ContentReaction contentReaction);
 
     List<ContentReactionResponse> toContentReactionResponseList(List<ContentReaction> contentReactions);
-
-    @Named("idToContent")
-    default Content idToContent(Long id) {
-        if (id == null) return null;
-        Content content = new Content();
-        content.setId(id);
-        return content;
-    }
-
-    @Named("idToUser")
-    default User idToUser(Long id) {
-        if (id == null) return null;
-        User user = new User();
-        user.setId(id);
-        return user;
-    }
-} 
+}

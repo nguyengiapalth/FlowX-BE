@@ -40,12 +40,16 @@ public class ProjectService {
         Department department = entityLookupService.getDepartmentById(projectCreateRequest.getDepartmentId());
 
         Project project = projectMapper.toProject(projectCreateRequest);
+        project.setDepartment(department);
+        log.info("Creating new project for department ID: {}", department.getId());
         
         // Set default values if not provided
         if (project.getStatus() == null) project.setStatus(ProjectStatus.NOT_STARTED);
         if (project.getStatus() == ProjectStatus.IN_PROGRESS) project.setStartDate(LocalDate.now());
 
+
         project = projectRepository.save(project);
+        log.info("Created new project with ID: {}", project.getId());
         return projectMapper.toProjectResponse(project);
     }
 

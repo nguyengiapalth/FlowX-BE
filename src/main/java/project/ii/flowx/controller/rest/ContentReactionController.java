@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import project.ii.flowx.applications.service.manage.ContentReactionService;
+import project.ii.flowx.applications.service.communicate.ContentReactionService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.content.ContentReactionRequest;
 import project.ii.flowx.model.dto.content.ContentReactionResponse;

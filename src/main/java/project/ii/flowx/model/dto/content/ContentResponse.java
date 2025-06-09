@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.file.FileResponse;
+import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.ContentTargetType;
 
 import java.time.Instant;
@@ -17,8 +18,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContentResponse {
-    String title;
+    Long id;
     String body;
+    
+    @Schema(description = "Author of the content")
+    UserResponse author;
+    
     ContentTargetType contentTargetType;
     Long targetId;
     long parentId;
@@ -26,7 +31,6 @@ public class ContentResponse {
     Instant createdAt;
     Instant updatedAt;
     List<ContentResponse> replies;
-    private Long id;
     
     @Schema(description = "Indicates if content has attached files")
     boolean hasFile;
