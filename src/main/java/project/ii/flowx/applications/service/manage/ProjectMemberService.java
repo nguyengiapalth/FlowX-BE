@@ -33,7 +33,7 @@ public class ProjectMemberService {
     EntityLookupService entityLookupService;
 
     @Transactional
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
     public ProjectMemberResponse createProjectMember(ProjectMemberCreateRequest projectMemberCreateRequest) {
         log.info("Tạo project member mới cho project ID: {}", projectMemberCreateRequest.getProjectId());
 
@@ -59,7 +59,7 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
     public ProjectMemberResponse updateProjectMember(Long id, ProjectMemberUpdateRequest projectMemberUpdateRequest) {
         log.info("Cập nhật project member với ID: {}", id);
 
@@ -74,7 +74,7 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
     public void deleteProjectMember(Long id) {
         log.info("Xóa project member với ID: {}", id);
 
@@ -85,7 +85,7 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "projectMember", key = "#id", unless = "#result == null")
+//    @Cacheable(value = "projectMember", key = "#id", unless = "#result == null")
     public ProjectMemberResponse getProjectMemberById(Long id) {
         log.debug("Lấy thông tin project member với ID: {}", id);
 
@@ -96,7 +96,7 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "projectMembers", key = "#projectId", unless = "#result.isEmpty()")
+//    @Cacheable(value = "projectMembers", key = "#projectId", unless = "#result.isEmpty()")
     public List<ProjectMemberResponse> getByProjectId(long projectId) {
         log.debug("Lấy danh sách members của project ID: {}", projectId);
 
@@ -105,7 +105,7 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "userProjects", key = "#userId", unless = "#result.isEmpty()")
+//    @Cacheable(value = "userProjects", key = "#userId", unless = "#result.isEmpty()")
     public List<ProjectMemberResponse> getByUserId(long userId) {
         log.debug("Lấy danh sách projects của user ID: {}", userId);
 
@@ -114,7 +114,7 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects"}, allEntries = true)
     public ProjectMemberResponse updateMemberStatus(Long id, MemberStatus status) {
         log.info("Cập nhật trạng thái member ID: {} thành: {}", id, status);
 
@@ -132,7 +132,7 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "activeProjectMembers", key = "#projectId")
+//    @Cacheable(value = "activeProjectMembers", key = "#projectId")
     public List<ProjectMemberResponse> getActiveMembers(long projectId) {
         log.debug("Lấy danh sách active members của project ID: {}", projectId);
 
@@ -144,7 +144,7 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects", "activeProjectMembers", "memberCount"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects", "activeProjectMembers", "memberCount"}, allEntries = true)
     public void bulkUpdateMemberStatus(List<Long> memberIds, MemberStatus status) {
         log.info("Cập nhật trạng thái hàng loạt cho {} members", memberIds.size());
 
@@ -164,17 +164,17 @@ public class ProjectMemberService {
     }
 
     // Cache management methods
-    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects", "activeProjectMembers", "memberCount"}, allEntries = true)
+//    @CacheEvict(value = {"projectMember", "projectMembers", "userProjects", "activeProjectMembers", "memberCount"}, allEntries = true)
     public void clearAllCache() {
         log.info("Đã xóa toàn bộ cache của ProjectMemberService");
     }
 
-    @CacheEvict(value = "projectMembers", key = "#projectId")
+//    @CacheEvict(value = "projectMembers", key = "#projectId")
     public void clearProjectMembersCache(long projectId) {
         log.info("Đã xóa cache members của project ID: {}", projectId);
     }
 
-    @CacheEvict(value = "userProjects", key = "#userId")
+//    @CacheEvict(value = "userProjects", key = "#userId")
     public void clearUserProjectsCache(long userId) {
         log.info("Đã xóa cache projects của user ID: {}", userId);
     }

@@ -15,8 +15,8 @@ import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.TaskStatus;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "Task Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -36,8 +36,8 @@ public class TaskResponse {
     LocalDate completedDate;
     Integer progress;
     Boolean hasFiles;
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     TaskStatus status;
     PriorityLevel priority;
 }

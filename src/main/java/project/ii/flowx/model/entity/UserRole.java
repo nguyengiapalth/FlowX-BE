@@ -7,7 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 import project.ii.flowx.shared.enums.RoleScope;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
@@ -44,7 +44,7 @@ public class UserRole {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    LocalDateTime createdAt;
 
     @Override
     public final boolean equals(Object o) {

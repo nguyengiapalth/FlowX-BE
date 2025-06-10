@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.ReactionType;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "Content Reaction Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -29,8 +29,8 @@ public class ContentReactionResponse {
     ReactionType reactionType;
     
     @Schema(description = "Created timestamp")
-    Instant createdAt;
+    LocalDateTime createdAt;
     
     @Schema(description = "Updated timestamp")
-    Instant updatedAt;
+    LocalDateTime updatedAt;
 } 

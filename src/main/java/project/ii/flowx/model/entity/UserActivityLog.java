@@ -5,7 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
@@ -48,7 +48,7 @@ public class UserActivityLog {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    LocalDateTime createdAt;
 
     @Override
     public final boolean equals(Object o) {

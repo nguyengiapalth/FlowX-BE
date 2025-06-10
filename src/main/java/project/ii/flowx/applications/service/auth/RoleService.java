@@ -23,7 +23,7 @@ public class RoleService {
     RoleRepository roleRepository;
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public List<Role> getAllRoles() {
         log.info("Fetching all roles from the database");
         return roleRepository.findAll();

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.entity.User;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "Notification Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -22,6 +22,6 @@ public class NotificationResponse {
     String entityType;
     Long entityId;
     Boolean isRead;
-    Instant createdAt;
-    Instant readAt;
+    LocalDateTime createdAt;
+    LocalDateTime readAt;
 }

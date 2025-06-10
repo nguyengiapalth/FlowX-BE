@@ -10,7 +10,7 @@ import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
 import project.ii.flowx.shared.enums.FileVisibility;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
@@ -62,7 +62,7 @@ public class File {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    LocalDateTime createdAt;
 
     @Column(name = "entity_type", columnDefinition = "text")
     @Enumerated(EnumType.STRING)

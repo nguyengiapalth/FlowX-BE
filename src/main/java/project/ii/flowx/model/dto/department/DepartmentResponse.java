@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "Department Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -18,6 +18,6 @@ public class DepartmentResponse {
     String name;
     String description;
     String background;
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }

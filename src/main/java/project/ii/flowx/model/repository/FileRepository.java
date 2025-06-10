@@ -6,7 +6,6 @@ import project.ii.flowx.model.entity.File;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,5 +18,5 @@ public interface FileRepository extends JpaRepository<File, Long> {
 
     List<File> findByFileStatus(FileStatus status);
 
-    List<File> findByFileStatusAndCreatedAtBefore(FileStatus fileStatus, Instant createdAt);
+    List<File> findByFileStatusAndCreatedAtBefore(FileStatus fileStatus, LocalDateTime createdAt);
 }

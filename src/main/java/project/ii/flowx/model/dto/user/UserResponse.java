@@ -8,8 +8,8 @@ import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.shared.enums.UserStatus;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "User Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -28,10 +28,14 @@ public class UserResponse {
     String address;
 
     String position;
+    String bio;
+    String facebook;
+    String linkedin;
+    String twitter;
     LocalDate joinDate;
     DepartmentResponse department;
 
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     UserStatus status;
 }

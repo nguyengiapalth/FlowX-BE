@@ -32,27 +32,28 @@ public class CacheConfig {
     @Value("${cache.default.ttl:300}")
     private int defaultTtl;
 
-    private final List<String> caffeineCacheName = Arrays.asList(
-            "userLocalRoles",
-            "task" //,... add more cache names as needed
-    );
-
-    @Bean
-    public CaffeineCacheManager caffeineCacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(caffeineCacheBuilder());
-        cacheManager.setCacheNames(caffeineCacheName);
-        log.info("Configured Caffeine cache manager with TTL: {} seconds", defaultTtl);
-        return cacheManager;
-    }
-
-    private Caffeine<Object, Object> caffeineCacheBuilder() {
-        return Caffeine.newBuilder()
-                .initialCapacity(100)
-                .maximumSize(1000)
-                .expireAfterWrite(defaultTtl, TimeUnit.SECONDS)
-                .recordStats();
-    }
+//    private final List<String> caffeineCacheName = Arrays.asList(
+//            "userLocalRoles",
+//            "task" //,... add more cache names as needed
+//    );
+//
+//    @Bean
+//    public CaffeineCacheManager caffeineCacheManager() {
+//        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+//        cacheManager.setCaffeine(caffeineCacheBuilder());
+//        cacheManager.setCacheNames(caffeineCacheName);
+//        log.info("Configured Caffeine cache manager with TTL: {} seconds", defaultTtl);
+//        return cacheManager;
+//    }
+//
+//    private Caffeine<Object, Object> caffeineCacheBuilder() {
+//        return Caffeine.newBuilder()
+//                .initialCapacity(100)
+//                .maximumSize(1000)
+//                .expireAfterWrite(defaultTtl, TimeUnit.SECONDS)
+//                .recordStats();
+//
+//    JVM passed out :v, so I use Redis as the only cache manager
 
     @Bean
     @Primary
@@ -64,8 +65,13 @@ public class CacheConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(10)));
-        cacheConfigurations.put("documents", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("files", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("tasks", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigurations.put("userLocalRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("contents", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
+        cacheConfigurations.put("userRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
 
         log.info("Configured Redis cache manager with default TTL: {} seconds", defaultTtl);
         return RedisCacheManager.builder(connectionFactory)

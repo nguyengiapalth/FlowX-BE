@@ -13,7 +13,6 @@ import project.ii.flowx.applications.service.helper.MinioService;
 import project.ii.flowx.model.entity.File;
 import project.ii.flowx.shared.enums.FileStatus;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -49,7 +48,7 @@ public class FileUploadCleanupJob {
                 } else {
                     log.info("file {} is still processing, checking for timeout...", file.getId());
                     // Check timeout (2 giờ)
-                    if (file.getCreatedAt().isBefore(Instant.now().minusSeconds(3600))) {
+                    if (file.getCreatedAt().isBefore(LocalDateTime.now().minusHours(1))) {
 
                         file.setFileStatus(FileStatus.FAILED);
                         fileService.update(file);
@@ -67,7 +66,7 @@ public class FileUploadCleanupJob {
     // Cleanup failed uploads (chạy mỗi giờ)
     @Scheduled(fixedRate = 3600000)
     public void cleanupFailedUploads() {
-        Instant cutoff = Instant.now().minusSeconds(3600); // 1 giờ trước
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(1); // 1 giờ trước
 
         List<File> failedFiles = fileService.findByStatusAndCreatedAtBefore(FileStatus.FAILED, cutoff);
 

@@ -1,14 +1,13 @@
 package project.ii.flowx.model.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 import org.hibernate.proxy.HibernateProxy;
 import project.ii.flowx.shared.enums.UserStatus;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -54,21 +53,34 @@ public class User {
     @Column(name = "position", length = 100)
     String position;
 
+    @Column(name = "bio", length = 1000)
+    String bio;
+
+    @Column(name = "facebook", length = 255)
+    String facebook;
+
+    @Column(name = "linkedin", length = 255)
+    String linkedin;
+
+    @Column(name = "twitter", length = 255)
+    String twitter;
+
     @Column(name = "join_date")
     LocalDate joinDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "department_id")
     @ToString.Exclude
     Department department;
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    Instant updatedAt;
+    LocalDateTime updatedAt;
 
     @ColumnDefault("'active'")
     @Column(name = "status", columnDefinition = "text")

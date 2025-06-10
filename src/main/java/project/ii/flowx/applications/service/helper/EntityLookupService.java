@@ -4,8 +4,6 @@ package project.ii.flowx.applications.service.helper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import project.ii.flowx.model.entity.*;
 import project.ii.flowx.model.repository.*;

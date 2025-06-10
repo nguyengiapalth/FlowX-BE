@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -20,5 +20,5 @@ public class InvalidToken {
     String token;
 
     @Column(name = "expired_at")
-    Instant expiredAt;
+    LocalDateTime expiredAt;
 }

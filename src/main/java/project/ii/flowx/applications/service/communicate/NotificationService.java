@@ -21,7 +21,7 @@ import project.ii.flowx.model.mapper.NotificationMapper;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.security.UserPrincipal;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 /**
  * Service class for managing notifications.
@@ -62,7 +62,7 @@ public class NotificationService {
 
         Notification notification = entityLookupService.getNotificationById(id);
         notification.setIsRead(true);
-        notification.setReadAt(Instant.now());
+        notification.setReadAt(LocalDateTime.now());
         notificationRepository.save(notification);
 
         log.info("Successfully marked notification {} as read", id);
@@ -82,7 +82,7 @@ public class NotificationService {
         for (Notification notification : notifications) {
             if (notification.getIsRead() == true) continue;
             notification.setIsRead(true);
-            notification.setReadAt(Instant.now());
+            notification.setReadAt(LocalDateTime.now());
         }
 
         notificationRepository.saveAll(notifications);

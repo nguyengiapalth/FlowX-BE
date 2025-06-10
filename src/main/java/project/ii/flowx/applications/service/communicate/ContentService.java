@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.FileService;
+import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
@@ -24,6 +25,7 @@ import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.FileTargetType;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -34,6 +36,7 @@ public class ContentService {
     ContentMapper contentMapper;
     EntityLookupService entityLookupService;
     FileService fileService;
+    AuthorizationService authorizationService;
 
     @Transactional
     @PreAuthorize( "hasAuthority('ROLE_MANAGER') " +
@@ -146,7 +149,7 @@ public class ContentService {
 
     private ContentResponse populateFiles(ContentResponse contentResponse) {
         if (contentResponse == null) return null;
-        
+
         try {
 
             if (contentResponse.isHasFile()) {
@@ -214,4 +217,15 @@ public class ContentService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<ContentResponse> getContentsByUser(Long userId) {
+        User user = entityLookupService.getUserById(userId);
+        List<Content> contents = contentRepository.findByAuthor(user);
+        List<ContentResponse> responses = contentMapper.toContentResponseList(contents)
+                .stream()
+                .filter(response -> authorizationService.canAccessContent(response.getId()))
+                .collect(Collectors.toList());
+
+        return populateFilesList(responses);
+    }
 }

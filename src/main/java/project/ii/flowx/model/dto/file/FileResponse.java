@@ -5,13 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileVisibility;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "File Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -25,10 +26,10 @@ public class FileResponse {
     Long size;
     String objectKey;
     String contentHash;
-    Long entityId;
+    Long targetId;
     String description;
-    User uploader;
-    Instant createdAt;
+    UserResponse uploader;
+    LocalDateTime createdAt;
     FileTargetType fileTargetType;
     FileVisibility visibility;
     String url;

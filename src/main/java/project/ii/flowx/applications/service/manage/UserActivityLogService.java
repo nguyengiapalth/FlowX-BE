@@ -35,13 +35,13 @@ public class UserActivityLogService {
         return userActivityLogMapper.toUserActivityLogResponse(activityLog);
     }
     
-    @Transactional
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    public void deleteActivityLog(Long id) {
-        userActivityLogRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Activity log not found"));
-        userActivityLogRepository.deleteById(id);
-    }
+//    @Transactional
+//    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+//    public void deleteActivityLog(Long id) {
+//        userActivityLogRepository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("Activity log not found"));
+//        userActivityLogRepository.deleteById(id);
+//    }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")

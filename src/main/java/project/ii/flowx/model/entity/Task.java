@@ -11,7 +11,7 @@ import project.ii.flowx.shared.enums.ContentTargetType;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.TaskStatus;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -71,11 +71,11 @@ public class Task {
 
     @CreationTimestamp
     @Column(name = "created_at")
-    Instant createdAt;
+    LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    Instant updatedAt;
+    LocalDateTime updatedAt;
 
     @ColumnDefault("'to_do'")
     @Column(name = "status", columnDefinition = "text")

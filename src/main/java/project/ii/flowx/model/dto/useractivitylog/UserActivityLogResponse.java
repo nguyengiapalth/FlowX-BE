@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.entity.User;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "User Activity Log Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -23,5 +23,5 @@ public class UserActivityLogResponse {
     String details;
     String ipAddress;
     String userAgent;
-    Instant createdAt;
+    LocalDateTime createdAt;
 }

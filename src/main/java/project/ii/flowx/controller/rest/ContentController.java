@@ -166,6 +166,25 @@ public class ContentController {
                 .build();
     }
 
+    @GetMapping("/user/{userId}")
+    @Operation(
+            summary = "Get contents by user",
+            description = "Retrieves a list of contents created by a specific user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "List of contents retrieved successfully"
+                    )
+            }
+    )
+    public FlowXResponse<List<ContentResponse>> getContentsByUser(@PathVariable Long userId) {
+        return FlowXResponse.<List<ContentResponse>>builder()
+                .data(contentService.getContentsByUser(userId))
+                .message("List of contents by user retrieved successfully")
+                .code(200)
+                .build();
+    }
+
     @Operation(
             summary = "Get contents by parent",
             description = "Retrieves a list of contents that are replies to a specific parent content.",

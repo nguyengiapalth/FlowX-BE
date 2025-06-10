@@ -30,6 +30,21 @@ public class UserUpdateRequest {
     @Schema(description = "Address of the user", example = "123 Main St, City, Country")
     String address;
 
+    @Schema(description = "Position of the user", example = "Software Engineer")
+    String position;
+
+    @Schema(description = "Bio of the user", example = "I am a software engineer with 5 years of experience")
+    String bio;
+
+    @Schema(description = "Facebook URL of the user", example = "https://facebook.com/johndoe")
+    String facebook;
+
+    @Schema(description = "LinkedIn URL of the user", example = "https://linkedin.com/in/johndoe")
+    String linkedin;
+
+    @Schema(description = "Twitter URL of the user", example = "https://twitter.com/johndoe")
+    String twitter;
+
     @Schema(description = "Status of the user", example = "ACTIVE")
     UserStatus status;
 

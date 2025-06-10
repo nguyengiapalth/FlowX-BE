@@ -24,9 +24,8 @@ import project.ii.flowx.model.repository.FileRepository;
 import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
-import project.ii.flowx.shared.enums.FileTargetType;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -113,6 +112,7 @@ public class FileService {
     @Transactional(readOnly = true)
     public List<FileResponse> getFilesByEntity(FileTargetType fileTargetType, Long entityId) {
         List<File> files = fileRepository.findByTargetIdAndFileTargetType(entityId, fileTargetType);
+        log.info("Found {} files", files.size());
         return fileMapper.toFileResponseList(files);
     }
 
@@ -142,15 +142,13 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    public List<File> findByStatusAndCreatedAtBefore(FileStatus fileStatus, Instant cutoff) {
+    public List<File> findByStatusAndCreatedAtBefore(FileStatus fileStatus, LocalDateTime cutoff) {
         if (fileStatus == null || cutoff == null) {
             throw new FlowXException(FlowXError.BAD_REQUEST, "File status and cutoff date must be provided");
         }
 
         return fileRepository.findByFileStatusAndCreatedAtBefore(fileStatus, cutoff);
     }
-
-
 
     /**
      * Get presigned upload URL for image without creating File record

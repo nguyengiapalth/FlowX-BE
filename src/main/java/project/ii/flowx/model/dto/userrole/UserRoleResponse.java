@@ -9,8 +9,6 @@ import project.ii.flowx.model.dto.role.RoleResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.RoleScope;
 
-import java.time.Instant;
-
 @Schema(description = "User Role Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Data

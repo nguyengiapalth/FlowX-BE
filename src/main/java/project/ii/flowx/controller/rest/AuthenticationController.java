@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.auth.AuthenticationService;
 import project.ii.flowx.applications.service.auth.AuthenticationService.AuthenticationResult;
-import project.ii.flowx.applications.service.auth.PasswordResetService;
+import project.ii.flowx.applications.service.auth.PasswordService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.FlowXResponse;
@@ -38,7 +38,7 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Authentication API")
 public class AuthenticationController {
     AuthenticationService authenticationService;
-    PasswordResetService passwordResetService;
+    PasswordService passwordService;
     GoogleTokenVerifier googleTokenVerifier;
 
     @PostMapping("/login")
@@ -75,7 +75,7 @@ public class AuthenticationController {
     )
     @SecurityRequirement(name = "bearerAuth")
     public FlowXResponse<Void> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
-        authenticationService.changePassword(changePasswordRequest);
+        passwordService.changePassword(changePasswordRequest);
         return FlowXResponse.<Void>builder()
                 .message("Password changed successfully")
                 .code(200)
@@ -180,7 +180,7 @@ public class AuthenticationController {
             }
     )
     public FlowXResponse<Void> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        passwordResetService.sendPasswordResetEmail(request);
+        passwordService.sendPasswordResetEmail(request);
         return FlowXResponse.<Void>builder()
                 .code(200)
                 .message("Nếu email tồn tại trong hệ thống, một email đặt lại mật khẩu đã được gửi")
@@ -203,7 +203,7 @@ public class AuthenticationController {
             }
     )
     public FlowXResponse<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
-        passwordResetService.resetPassword(request);
+        passwordService.resetPassword(request);
         return FlowXResponse.<Void>builder()
                 .code(200)
                 .message("Mật khẩu đã được đặt lại thành công")

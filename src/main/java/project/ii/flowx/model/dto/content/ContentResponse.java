@@ -9,7 +9,7 @@ import project.ii.flowx.model.dto.file.FileResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.ContentTargetType;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Schema(description = "Content Response")
@@ -28,8 +28,8 @@ public class ContentResponse {
     Long targetId;
     long parentId;
     int depth;
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     List<ContentResponse> replies;
     
     @Schema(description = "Indicates if content has attached files")

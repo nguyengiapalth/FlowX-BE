@@ -48,7 +48,6 @@ public class UserRoleService {
         Long userId = userPrincipal.getId();
 
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 
@@ -59,7 +58,7 @@ public class UserRoleService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "userLocalRoles", key = "#userId")// , cacheManager = "caffeineCacheManager")
+//    @Cacheable(value = "userLocalRoles", key = "#userId")// , cacheManager = "caffeineCacheManager")
     public List<UserRoleResponse> getNonGlobalRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findLocalRoleByUserId(userId);
         log.info("Non-global user roles for user with id {} : {}", userId, userRoles);
@@ -68,7 +67,7 @@ public class UserRoleService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    @Cacheable(value = "roleUsersByRoleId", key = "#roleId")
+//    @Cacheable(value = "roleUsersByRoleId", key = "#roleId")
     public List<UserRoleResponse> getUsersForRole(Long roleId) {
         List<UserRole> userRoles = userRoleRepository.findByRoleId(roleId);
         log.info("User roles for role with id {} : {}", roleId, userRoles);
@@ -78,7 +77,7 @@ public class UserRoleService {
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR') " +
             "or @authorize.canAssignRole(#userRoleCreateRequest.scope, #userRoleCreateRequest.scopeId)")
-    @CacheEvict(value = {"userLocalRoles"}, key = "#userRoleCreateRequest.userId")//, cacheManager = "caffeineCacheManager")
+//    @CacheEvict(value = {"userLocalRoles"}, key = "#userRoleCreateRequest.userId")//, cacheManager = "caffeineCacheManager")
     public void assignRoleToUser(UserRoleCreateRequest userRoleCreateRequest) {
         // validate userId and roleId
         User user = entityLookupService.getUserById(userRoleCreateRequest.getUserId());
@@ -116,7 +115,7 @@ public class UserRoleService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")//, cacheManager = "caffeineCacheManager")
+//    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")//, cacheManager = "caffeineCacheManager")
     public void deleteUserRolesByUserIdAndScope(Long userId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndScopeAndScopeId(userId, roleScope, scopeId);
 

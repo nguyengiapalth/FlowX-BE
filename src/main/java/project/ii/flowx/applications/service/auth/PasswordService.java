@@ -2,18 +2,22 @@ package project.ii.flowx.applications.service.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.helper.MailService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
+import project.ii.flowx.model.dto.auth.ChangePasswordRequest;
 import project.ii.flowx.model.dto.auth.ForgotPasswordRequest;
 import project.ii.flowx.model.dto.auth.ResetPasswordRequest;
 import project.ii.flowx.model.entity.PasswordResetToken;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.repository.PasswordResetTokenRepository;
 import project.ii.flowx.model.repository.UserRepository;
+import project.ii.flowx.security.UserPrincipal;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,7 +25,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PasswordResetService {
+public class PasswordService {
     
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -71,14 +75,13 @@ public class PasswordResetService {
         PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(token, LocalDateTime.now())
                 .orElseThrow(() -> new FlowXException(FlowXError.INVALID_TOKEN, "Invalid or expired reset token"));
         
-        if (resetToken.isUsed()) {
+        if (resetToken.isUsed())
             throw new FlowXException(FlowXError.INVALID_TOKEN, "Reset token has already been used");
-        }
-        
+
         // Validate new password
-        if (newPassword == null || newPassword.trim().length() < 6) {
+        if (newPassword == null || newPassword.trim().length() < 6)
             throw new FlowXException(FlowXError.BAD_REQUEST, "Password must be at least 6 characters long");
-        }
+
         
         // Update password
         User user = resetToken.getUser();
@@ -91,7 +94,29 @@ public class PasswordResetService {
         
         log.info("Password reset successfully for user: {}", user.getEmail());
     }
-    
+
+    @Transactional
+    public void changePassword(ChangePasswordRequest changePasswordRequest) {
+        var context = SecurityContextHolder.getContext();
+        if (context == null || context.getAuthentication() == null) {
+            throw new FlowXException(FlowXError.UNAUTHORIZED, "Unauthorized");
+        }
+        Authentication authentication = context.getAuthentication();
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+
+        log.info("old password: {}", changePasswordRequest.getOldPassword());
+        log.info("is matches: {}", passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()));
+
+        if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()))
+            throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
+
+        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+
+        userRepository.save(user);
+    }
+
     @Transactional
     public void cleanupExpiredTokens() {
         passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());

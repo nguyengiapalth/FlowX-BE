@@ -9,8 +9,8 @@ import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.ProjectStatus;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "Project Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -25,8 +25,8 @@ public class ProjectResponse {
     LocalDate startDate;
     LocalDate endDate;
     DepartmentResponse department;
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     ProjectStatus status;
     PriorityLevel priority;
 }

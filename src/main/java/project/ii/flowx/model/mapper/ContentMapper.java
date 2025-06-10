@@ -25,7 +25,6 @@ public interface ContentMapper {
 
     @Mapping(target = "author", source = "author")
     @Mapping(target = "parentId", source = "parent", qualifiedByName = "contentToParentId")
-    @Mapping(target = "hasFile", ignore = true)
     @Mapping(target = "files", ignore = true)
     ContentResponse toContentResponse(Content content);
 

@@ -9,8 +9,8 @@ import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.MemberStatus;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Schema(description = "Project Member Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -23,7 +23,7 @@ public class ProjectMemberResponse {
     UserResponse user;
     String role;
     LocalDate joinDate;
-    Instant createdAt;
-    Instant updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     MemberStatus status;
 }

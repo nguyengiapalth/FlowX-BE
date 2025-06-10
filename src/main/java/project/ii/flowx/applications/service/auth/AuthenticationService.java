@@ -125,6 +125,25 @@ public class AuthenticationService {
         return new AuthenticationResult(response, refreshToken);
     }
 
+    @Transactional
+    public void logout(LogoutRequest request) {
+        try {
+            String token = request.getToken();
+            if (!StringUtils.hasText(token)) return;
+            // Verify token is valid before invalidating
+            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
+                    .build()
+                    .verify(token);
+
+            // Save token to invalidated tokens repository
+            InvalidToken invalidToken = new InvalidToken();
+            invalidToken.setToken(token);
+            invalidTokenRepository.save(invalidToken);
+            log.info("Token invalidated successfully");
+        } catch (JWTVerificationException e) {
+            log.info("Token already expired or invalid: {}", e.getMessage());
+        }
+    }
 
     @Transactional(readOnly = true)
     public RefreshTokenResponse refreshToken(String refreshTokenString) {
@@ -167,48 +186,6 @@ public class AuthenticationService {
         } catch (Exception e) {
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Error refreshing token");
         }
-    }
-
-    @Transactional
-    public void logout(LogoutRequest request) {
-        try {
-            String token = request.getToken();
-            if (!StringUtils.hasText(token)) return;
-            // Verify token is valid before invalidating
-            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
-                    .build()
-                    .verify(token);
-
-            // Save token to invalidated tokens repository
-            InvalidToken invalidToken = new InvalidToken();
-            invalidToken.setToken(token);
-            invalidTokenRepository.save(invalidToken);
-            log.info("Token invalidated successfully");
-        } catch (JWTVerificationException e) {
-            log.info("Token already expired or invalid: {}", e.getMessage());
-        }
-    }
-
-    @Transactional
-    public void changePassword(ChangePasswordRequest changePasswordRequest) {
-        var context = SecurityContextHolder.getContext();
-        if (context == null || context.getAuthentication() == null) {
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "Unauthorized");
-        }
-        Authentication authentication = context.getAuthentication();
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
-
-        log.info("old password: {}", changePasswordRequest.getOldPassword());
-        log.info("is matches: {}", passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()));
-
-        if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()))
-            throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
-
-        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
-
-        userRepository.save(user);
     }
 
     public String generateToken(UserPrincipal userPrincipal) {

@@ -34,7 +34,7 @@ public class ProjectService {
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
-            "or @authorize.hasDepartmentRole('MANAGER', projectCreateRequest.getDepartmentId())")
+            "or @authorize.hasDepartmentRole('MANAGER', #projectCreateRequest.getDepartmentId())")
     public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest) {
         // Validate department ID
         Department department = entityLookupService.getDepartmentById(projectCreateRequest.getDepartmentId());
@@ -54,7 +54,7 @@ public class ProjectService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', id)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
     public ProjectResponse updateProject(Long id, ProjectUpdateRequest projectUpdateRequest) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -66,7 +66,7 @@ public class ProjectService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', id)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
     public ProjectResponse updateProjectStatus(Long id, ProjectStatus status) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -86,7 +86,7 @@ public class ProjectService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', id)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
     public ProjectResponse completeProject(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -99,7 +99,7 @@ public class ProjectService {
     }
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', id)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
     public void deleteProject(Long id) {
         projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -107,7 +107,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MEMBER', id)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MEMBER', #id)")
     public ProjectResponse getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -122,7 +122,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasDepartmentRole('MANAGER', departmentId)")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #departmentId)")
     public List<ProjectResponse> getProjectsByDepartmentId(long departmentId) {
         List<Project> projects = projectRepository.findByDepartmentId(departmentId);
 

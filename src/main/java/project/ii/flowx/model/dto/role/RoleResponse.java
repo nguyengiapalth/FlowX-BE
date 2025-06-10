@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Schema(description = "Role Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -24,8 +24,8 @@ public class RoleResponse {
     String description;
     
     @Schema(description = "Created At", example = "2023-01-01T00:00:00Z")
-    Instant createdAt;
+    LocalDateTime createdAt;
     
     @Schema(description = "Updated At", example = "2023-01-02T00:00:00Z")
-    Instant updatedAt;
+    LocalDateTime updatedAt;
 }

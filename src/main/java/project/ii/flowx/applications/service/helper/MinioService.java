@@ -18,7 +18,7 @@ import project.ii.flowx.model.entity.File;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
@@ -277,7 +277,7 @@ public class MinioService {
 
     private String generateObjectName(String originalFileName) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        String timestamp = String.valueOf(LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.UTC) * 1000);
         String extension = "";
 
         if (originalFileName != null && originalFileName.contains(".")) {
@@ -292,7 +292,7 @@ public class MinioService {
      */
     private String generateAvatarObjectName(String originalFileName) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        String timestamp = String.valueOf(LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.UTC) * 1000);
         return "avatars/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped avatars
     }
 
@@ -301,7 +301,7 @@ public class MinioService {
      */
     private String generateBackgroundObjectName(String originalFileName) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String timestamp = String.valueOf(Instant.now().toEpochMilli());
+        String timestamp = String.valueOf(LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.UTC) * 1000);
         return "backgrounds/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped backgrounds
     }
 

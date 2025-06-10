@@ -122,7 +122,6 @@ public class AuthorizationService {
     }
 
     public boolean isContentManager(Long contentId) {
-        Long userId = getUserId();
         var content = entityLookupService.getContentById(contentId);
         if (content == null) throw new FlowXException(FlowXError.NOT_FOUND, "Content not found with ID: " + contentId);
 
@@ -130,7 +129,7 @@ public class AuthorizationService {
             return hasDepartmentRole("MANAGER", content.getTargetId());
         if (content.getContentTargetType() == ContentTargetType.PROJECT)
             return hasProjectRole("MANAGER", content.getTargetId());
-        else return false;
+        return false;
     }
 
     public boolean canAccessContent(Long contentId) {
@@ -140,7 +139,6 @@ public class AuthorizationService {
 
         // Check if the user is the author
         if (content.getAuthor().getId().equals(userId)) return true;
-
         // Check if the user has a manager role in the target department or project
         if (content.getContentTargetType() == ContentTargetType.GLOBAL) return true;
         if (content.getContentTargetType() == ContentTargetType.DEPARTMENT)

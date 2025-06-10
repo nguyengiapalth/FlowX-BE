@@ -34,11 +34,11 @@ public class FileCreateRequest {
     String description;
 
     @Schema(description = "ID of the related entity", example = "5")
-    Long entityId;
+    Long targetId;
 
     @Schema(description = "Type of the related entity", example = "CONTENT")
     @Enumerated(EnumType.STRING)
-    FileTargetType entityType;
+    FileTargetType fileTargetType;
 
     @Schema(description = "Visibility of the file", example = "PRIVATE")
     @Enumerated(EnumType.STRING)

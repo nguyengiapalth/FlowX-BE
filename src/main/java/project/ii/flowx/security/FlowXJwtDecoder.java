@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,7 +66,7 @@ public class FlowXJwtDecoder implements JwtDecoder {
                 } else if (value.asBoolean() != null) {
                     claims.put(key, value.asBoolean());
                 } else if (value.asDate() != null) {
-                    claims.put(key, value.asDate().toInstant());
+                    claims.put(key, LocalDateTime.ofInstant(value.asDate().toInstant(), ZoneOffset.UTC));
                 }
             });
 
@@ -73,7 +74,7 @@ public class FlowXJwtDecoder implements JwtDecoder {
             return Jwt.withTokenValue(token)
                     .headers(h -> h.putAll(headers))
                     .claims(c -> c.putAll(claims))
-                    .issuedAt(decodedJWT.getIssuedAt() != null ? decodedJWT.getIssuedAt().toInstant() : Instant.now())
+                    .issuedAt(decodedJWT.getIssuedAt() != null ? decodedJWT.getIssuedAt().toInstant() : LocalDateTime.now().toInstant(ZoneOffset.UTC))
                     .expiresAt(decodedJWT.getExpiresAt() != null ? decodedJWT.getExpiresAt().toInstant() : null)
                     .build();
         } catch (JWTVerificationException e) {
