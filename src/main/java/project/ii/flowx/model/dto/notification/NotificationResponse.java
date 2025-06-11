@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.entity.User;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class NotificationResponse {
     Long id;
-    User user;
+    UserResponse user;
     String title;
     String content;
     String entityType;

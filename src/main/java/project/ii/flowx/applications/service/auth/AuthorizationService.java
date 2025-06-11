@@ -28,7 +28,7 @@ public class AuthorizationService {
     EntityLookupService entityLookupService;
 
     public List<UserRoleResponse> getUserRoles(Long userId) {
-        return userRoleService.getNonGlobalRolesForUser(userId);
+        return userRoleService.getRolesForUser(userId);
     }
 
     public boolean hasRole(String roleName, RoleScope roleScope, Long scopeId) {

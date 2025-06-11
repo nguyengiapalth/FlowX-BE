@@ -36,19 +36,38 @@ import java.util.List;
 public class NotificationService {
      NotificationRepository notificationRepository;
      NotificationMapper notificationMapper;
-    SimpMessagingTemplate messagingTemplate;
+     SimpMessagingTemplate messagingTemplate;
+     EntityLookupService entityLookupService;
 
     @Transactional()
     public NotificationResponse createNotification(NotificationCreateRequest createRequest) {
-        Notification notification = notificationMapper.toNotification(createRequest);
+        // Create notification entity
+        Notification notification = new Notification();
+        notification.setTitle(createRequest.getTitle());
+        notification.setContent(createRequest.getContent());
+        notification.setEntityType(createRequest.getEntityType());
+        notification.setEntityId(createRequest.getEntityId());
         notification.setIsRead(false);
+        
+        // Set user by ID
+        notification.setUser(entityLookupService.getUserById(createRequest.getUserId()));
+        
         Notification savedNotification = notificationRepository.save(notification);
 
-        // Publish the notification to the user's WebSocket channel
-        messagingTemplate.convertAndSend("/topic/notifications/" + createRequest.getUserId(),
-            notificationMapper.toNotificationResponse(savedNotification));
+        // Create response DTO
+        NotificationResponse response = notificationMapper.toNotificationResponse(savedNotification);
 
-        return notificationMapper.toNotificationResponse(savedNotification);
+        // Publish the notification to the user's WebSocket channel
+        String topic = "/topic/notifications/" + createRequest.getUserId();
+        
+        try {
+            messagingTemplate.convertAndSend(topic, response);
+            log.info("Notification sent to WebSocket topic: {}", topic);
+        } catch (Exception e) {
+            log.error("Failed to send notification to WebSocket: {}", e.getMessage(), e);
+        }
+
+        return response;
     }
 
     @Transactional()

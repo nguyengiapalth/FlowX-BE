@@ -65,44 +65,6 @@ public class UserRoleController {
                 .build();
     }
 
-    @Operation(
-            summary = "Get global roles for user",
-            description = "Retrieves all global roles assigned to a specific user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Global roles retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/global/{userId}")
-    public FlowXResponse<List<UserRoleResponse>> getGlobalRolesForUser(@PathVariable Long userId) {
-        return FlowXResponse.<List<UserRoleResponse>>builder()
-                .data(userRoleService.getGlobalRolesForUser(userId))
-                .message("Global roles retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Get local roles for user",
-            description = "Retrieves all local roles assigned to a specific user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Local roles retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/local/{userId}")
-    public FlowXResponse<List<UserRoleResponse>> getLocalRolesForUser(@PathVariable Long userId) {
-        return FlowXResponse.<List<UserRoleResponse>>builder()
-                .data(userRoleService.getNonGlobalRolesForUser(userId))
-                .message("Local roles retrieved successfully")
-                .code(200)
-                .build();
-    }
-
     @GetMapping("my-roles")
     @Operation(
             summary = "Get my roles",
