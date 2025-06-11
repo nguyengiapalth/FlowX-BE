@@ -17,6 +17,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface TaskMapper {
 
+    @Mapping(target = "files", ignore = true)
     TaskResponse toTaskResponse(Task task);
 
     @Mapping(target = "assigner.id", source = "assignerId")

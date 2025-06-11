@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.department.DepartmentResponse;
+import project.ii.flowx.model.dto.file.FileResponse;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.ContentTargetType;
@@ -17,6 +18,7 @@ import project.ii.flowx.shared.enums.TaskStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Task Response")
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -40,4 +42,7 @@ public class TaskResponse {
     LocalDateTime updatedAt;
     TaskStatus status;
     PriorityLevel priority;
+    
+    @Schema(description = "List of attached files")
+    List<FileResponse> files;
 }

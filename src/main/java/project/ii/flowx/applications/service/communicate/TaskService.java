@@ -8,10 +8,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.model.entity.Task;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.repository.TaskRepository;
+import project.ii.flowx.model.dto.file.FileResponse;
 import project.ii.flowx.model.dto.task.TaskCreateRequest;
 import project.ii.flowx.model.dto.task.TaskResponse;
 import project.ii.flowx.model.dto.task.TaskUpdateRequest;
@@ -20,6 +22,7 @@ import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.TaskMapper;
 import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.ContentTargetType;
+import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.TaskStatus;
 
 import java.util.List;
@@ -32,6 +35,7 @@ public class TaskService {
     TaskRepository taskRepository;
     TaskMapper taskMapper;
     EntityLookupService entityLookupService;
+    FileService fileService;
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canCreateTask(#taskCreateRequest.targetId, #taskCreateRequest.targetType)")
@@ -47,7 +51,7 @@ public class TaskService {
 
         task = taskRepository.save(task);
 
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional
@@ -57,7 +61,7 @@ public class TaskService {
         taskMapper.updateTaskFromRequest(task, taskUpdateRequest);
         task = taskRepository.save(task);
 
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional
@@ -73,7 +77,7 @@ public class TaskService {
         }
 
         task = taskRepository.save(task);
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional
@@ -86,7 +90,7 @@ public class TaskService {
 
         task = taskRepository.save(task);
 
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional
@@ -97,7 +101,7 @@ public class TaskService {
         if (task.getStatus() == TaskStatus.COMPLETED) task.setStatus(TaskStatus.IN_PROGRESS);
 
         task = taskRepository.save(task);
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional
@@ -111,28 +115,28 @@ public class TaskService {
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssignee(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse getTaskById(Long id) {
         Task task = getTaskByIdInternal(id);
-        return taskMapper.toTaskResponse(task);
+        return populateFiles(taskMapper.toTaskResponse(task));
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public List<TaskResponse> getAllTasks() {
         List<Task> tasks = taskRepository.findAll();
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', #projectId)")
     public List<TaskResponse> getTasksByProjectId(Long projectId) {
         List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, projectId);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasDepartmentRole('MANAGER', #departmentId)")
     public List<TaskResponse> getTasksByDepartmentId(Long departmentId) {
         List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, departmentId);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
@@ -140,7 +144,7 @@ public class TaskService {
     public List<TaskResponse> getMyTaskCreated() {
         Long userId = getUserId();
         List<Task> tasks = taskRepository.findByAssignerId(userId);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
@@ -148,7 +152,7 @@ public class TaskService {
     public List<TaskResponse> getMyTask() {
         Long userId = getUserId();
         List<Task> tasks = taskRepository.findByAssigneeId(userId);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
@@ -156,14 +160,14 @@ public class TaskService {
     public List<TaskResponse> getMyTaskByProjectId(Long projectId) {
         Long userId = getUserId();
         List<Task> tasks = taskRepository.findByAssigneeIdAndTargetTypeAndTargetId(userId, ContentTargetType.PROJECT, projectId);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     public List<TaskResponse> getTasksByStatus(TaskStatus status) {
         List<Task> tasks = taskRepository.findByStatus(status);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     @Transactional(readOnly = true)
@@ -171,7 +175,7 @@ public class TaskService {
     public List<TaskResponse> getMyTasksByStatus(TaskStatus status) {
         Long userId = getUserId();
         List<Task> tasks = taskRepository.findByAssigneeIdAndStatus(userId, status);
-        return taskMapper.toTaskResponseList(tasks);
+        return populateFilesList(taskMapper.toTaskResponseList(tasks));
     }
 
     // Helper methods
@@ -193,5 +197,52 @@ public class TaskService {
 
     public List<Task> getOverdueTasks() {
         return taskRepository.findOverdueTasks();
+    }
+
+    @Transactional
+    public void updateHasFileFlag(Long taskId) {
+        Task task = getTaskByIdInternal(taskId);
+        List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.TASK, taskId);
+        task.setHasFiles(!files.isEmpty());
+        taskRepository.save(task);
+    }
+
+    // Populate files for TaskResponse, similar to ContentService
+    private TaskResponse populateFiles(TaskResponse taskResponse) {
+        if (taskResponse == null) return null;
+        try {
+            if (taskResponse.getHasFiles() != null && taskResponse.getHasFiles()) {
+                // Only call fileService if hasFiles is true
+                List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.TASK, taskResponse.getId());
+                taskResponse.setFiles(files);
+                
+                if (files.isEmpty()) {
+                    // hasFiles is true but no files found, update database
+                    Task task = taskRepository.findById(taskResponse.getId()).orElse(null);
+                    if (task != null) {
+                        task.setHasFiles(false);
+                        taskRepository.save(task);
+                    }
+                    taskResponse.setHasFiles(false);
+                } else {
+                    taskResponse.setHasFiles(true);
+                }
+            } else {
+                // hasFiles is false or task not found, don't call fileService
+                taskResponse.setFiles(List.of());
+                taskResponse.setHasFiles(false);
+            }
+        } catch (Exception e) {
+            taskResponse.setFiles(List.of());
+            taskResponse.setHasFiles(false);
+        }
+        
+        return taskResponse;
+    }
+
+    private List<TaskResponse> populateFilesList(List<TaskResponse> taskResponses) {
+        return taskResponses.stream()
+                .map(this::populateFiles)
+                .toList();
     }
 }
