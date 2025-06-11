@@ -70,9 +70,13 @@ public class ProjectService {
     }
 
     // Helper method to add members to project
-    private void addMembersToProject(Long projectId, List<Long> memberIds) {
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
+            "or @authorize.hasProjectRole('MANAGER', #projectId)")
+    protected void addMembersToProject(Long projectId, List<Long> memberIds) {
         List<ProjectMember> membersToAdd = new ArrayList<>();
-        Project project = entityLookupService.getProjectById(projectId);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
         
         for (Long userId : memberIds) {
             // Validate user exists and get user entity
@@ -88,7 +92,6 @@ public class ProjectService {
                     .status(MemberStatus.ACTIVE)
                     .joinDate(LocalDate.now())
                     .build();
-                
                 membersToAdd.add(projectMember);
             } else {
                 log.warn("User {} is already a member of project {}", userId, projectId);
@@ -193,6 +196,8 @@ public class ProjectService {
         return projectMapper.toProjectResponseList(projects);
     }
 
+    @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public List<ProjectResponse> getMyProjects() {
         Long userId = getUserId();
         List<Project> projects = projectRepository.findByMemberId(userId);

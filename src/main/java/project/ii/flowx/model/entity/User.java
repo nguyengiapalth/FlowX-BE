@@ -70,7 +70,7 @@ public class User {
     String twitter;
 
     @Column(name = "gender", length = 10)
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     String gender;
 
     @Column(name = "join_date")

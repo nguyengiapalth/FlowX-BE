@@ -3,6 +3,7 @@ package project.ii.flowx.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,6 +19,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import project.ii.flowx.exceptionhandler.FlowXError;
+import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
 
 import java.io.IOException;
@@ -67,8 +70,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
-        catch (Exception ex) {
+        catch (TokenExpiredException ex) {
             log.error("Could not set user authentication in security context", ex);
+            throw new FlowXException(FlowXError.TOKEN_EXPIRED, "Token expired");
         }
 
         filterChain.doFilter(request, response);
@@ -90,9 +94,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Verify token signature
             JWT.require(Algorithm.HMAC256(jwtSecret)).build().verify(token);
             return true;
-        } catch (JWTVerificationException ex) {
+        } catch (TokenExpiredException ex) {
             log.error("Invalid JWT token: {}", ex.getMessage());
-            return false;
+            throw ex;
+//            return false;
         }
     }
 }

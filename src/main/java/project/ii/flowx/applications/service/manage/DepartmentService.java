@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.events.DepartmentEvent;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.model.entity.Department;
@@ -32,6 +33,7 @@ public class DepartmentService {
     ApplicationEventPublisher applicationEventPublisher;
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
+    @Transactional
     public DepartmentResponse createDepartment(DepartmentCreateRequest departmentCreateRequest) {
         Department department = departmentMapper.toDepartment(departmentCreateRequest);
         DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
@@ -39,52 +41,67 @@ public class DepartmentService {
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
+    @Transactional
     public DepartmentResponse updateDepartment(Long id, DepartmentUpdateRequest departmentUpdateRequest) {
-        // validate new department name if provided
-        if (departmentUpdateRequest.getName() != null && departmentRepository.existsByName(departmentUpdateRequest.getName())) {
-            throw new FlowXException(FlowXError.ALREADY_EXISTS, "Department with name " + departmentUpdateRequest.getName() + " already exists");
-        }
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
 
         departmentMapper.updateDepartmentFromRequest(department, departmentUpdateRequest);
-        DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
-        return response;
+
+        departmentRepository.save(department);
+        return departmentMapper.toDepartmentResponse(departmentRepository.save(department));
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
+    @Transactional
     public DepartmentResponse updateDepartmentBackground(Long id, String background) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
 
         department.setBackground(background);
-
-        department = departmentRepository.save(department);
-        return departmentMapper.toDepartmentResponse(department);
+        DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
+        
+        return response;
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
+    @Transactional
     public DepartmentResponse updateManager(Long id, Long newManagerId) {
+        log.info("updateManager called with departmentId={}, newManagerId={}", id, newManagerId);
+        
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
 
+        Long oldManagerId = department.getManagerId();
+        log.info("Current manager for department {}: {}", id, oldManagerId);
 
-
-        // validate user id exists, is member of department and is not already a manager
-        if(newManagerId != 0){
-            User user = entityLookupService.getUserById(newManagerId);
-            if(!user.getDepartment().getId().equals(department.getId()))
-                throw new FlowXException(FlowXError.FORBIDDEN, "User is not a member of this department");
+        // Only validate user exists if newManagerId is not 0 (0 means remove manager)
+        if (newManagerId != 0) {
+            log.info("Validating new manager with ID: {}", newManagerId);
+            User newManager = entityLookupService.getUserById(newManagerId);
+            log.info("New manager found: {}", newManager.getFullName());
+        } else {
+            log.info("Removing manager (newManagerId = 0)");
         }
 
-        // publish event to notify that manager has changed
-        applicationEventPublisher.publishEvent(new DepartmentEvent.ManagerChangedEvent(id, department.getManagerId(), newManagerId));
+        department.setManagerId(newManagerId == 0 ? null : newManagerId);
+        DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
+        log.info("Department saved with new managerId: {}", department.getManagerId());
 
-        department.setManagerId(newManagerId);
-        department = departmentRepository.save(department);
-        return departmentMapper.toDepartmentResponse(department);
+        // publish manager change event
+        DepartmentEvent.ManagerChangedEvent event = new DepartmentEvent.ManagerChangedEvent(
+                department.getId(),
+                oldManagerId != null ? oldManagerId : 0,
+                newManagerId
+        );
+        log.info("Publishing manager changed event: {}", event);
+        applicationEventPublisher.publishEvent(event);
+
+        return response;
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
+    @Transactional
     public void deleteDepartment(Long id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
@@ -93,15 +110,16 @@ public class DepartmentService {
 
 
     @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
     public List<DepartmentResponse> getAllDepartments() {
         return departmentMapper.toDepartmentResponseList(departmentRepository.findAll());
     }
 
     @PreAuthorize("isAuthenticated()")
+    @Transactional(readOnly = true)
     public DepartmentResponse getDepartmentById(Long id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
         return departmentMapper.toDepartmentResponse(department);
     }
-
 }

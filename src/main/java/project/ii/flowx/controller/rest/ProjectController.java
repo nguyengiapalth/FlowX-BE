@@ -273,7 +273,7 @@ public class ProjectController {
     )
     @PutMapping("/update-background/{id}")
     public FlowXResponse<ProjectResponse> updateProjectBackground(@PathVariable Long id, @RequestBody String background) {
-
+        background = background.substring(1, background.length() - 1);
         return FlowXResponse.<ProjectResponse>builder()
                 .data(projectService.updateProjectBackground(id, background))
                 .message("Project background updated successfully")

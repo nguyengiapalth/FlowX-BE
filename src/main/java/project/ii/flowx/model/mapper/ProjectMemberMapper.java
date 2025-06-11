@@ -2,11 +2,9 @@ package project.ii.flowx.model.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import project.ii.flowx.model.entity.ProjectMember;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberCreateRequest;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberResponse;
-import project.ii.flowx.model.dto.projectmember.ProjectMemberUpdateRequest;
 
 import java.util.List;
 

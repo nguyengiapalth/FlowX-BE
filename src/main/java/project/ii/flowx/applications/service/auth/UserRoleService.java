@@ -103,6 +103,7 @@ public class UserRoleService {
         userRoleRepository.deleteById(id);
     }
 
+    @Transactional
     public void deleteUserRoleByUserIdAndRoleIdAndScope(Long userId, Long roleId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndRoleIdAndScopeAndScopeId(userId, roleId, roleScope, scopeId);
     }

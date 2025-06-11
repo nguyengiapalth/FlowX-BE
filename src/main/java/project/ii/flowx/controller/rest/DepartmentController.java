@@ -15,7 +15,6 @@ import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.department.DepartmentCreateRequest;
 import project.ii.flowx.model.dto.department.DepartmentResponse;
 import project.ii.flowx.model.dto.department.DepartmentUpdateRequest;
-import project.ii.flowx.model.dto.department.DepartmentBackgroundUpdateRequest;
 
 import java.util.List;
 
@@ -74,6 +73,7 @@ public class DepartmentController {
     public FlowXResponse<DepartmentResponse> updateDepartment(
             @PathVariable Long id,
             @RequestBody DepartmentUpdateRequest request) {
+        log.info("Updating department with id: {} with request: {}", id, request);
 
         return FlowXResponse.<DepartmentResponse>builder()
                 .data(departmentService.updateDepartment(id, request))
@@ -128,6 +128,7 @@ public class DepartmentController {
     )
     @PutMapping("/update-background/{id}")
     public FlowXResponse<DepartmentResponse> updateDepartmentBackground(@PathVariable Long id, @RequestBody String background) {
+        background = background.substring(1, background.length() - 1);
         return FlowXResponse.<DepartmentResponse>builder()
                 .data(departmentService.updateDepartmentBackground(id, background))
                 .message("Department background updated successfully")

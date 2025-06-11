@@ -3,6 +3,9 @@ package project.ii.flowx.model.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import project.ii.flowx.applications.service.helper.MinioService;
 import project.ii.flowx.model.entity.Project;
 import project.ii.flowx.model.dto.project.ProjectCreateRequest;
 import project.ii.flowx.model.dto.project.ProjectResponse;
@@ -15,14 +18,29 @@ import java.util.List;
  * This interface uses MapStruct to generate the implementation at compile time.
  */
 @Mapper(componentModel = "spring")
-public interface ProjectMapper {
+public abstract class ProjectMapper {
+    @Autowired
+    protected MinioService minioService;
 
-    ProjectResponse toProjectResponse(Project project);
+    @Mapping(target = "background", source = "background", qualifiedByName = "objectKeyToUrl")
+    public abstract ProjectResponse toProjectResponse(Project project);
 
-//    @Mapping(target = "department.id", source = "departmentId")
-    Project toProject(ProjectCreateRequest projectCreateRequest);
+    public abstract Project toProject(ProjectCreateRequest projectCreateRequest);
 
-    void updateProjectFromRequest(@MappingTarget Project project, ProjectUpdateRequest projectUpdateRequest);
+    public abstract void updateProjectFromRequest(@MappingTarget Project project, ProjectUpdateRequest projectUpdateRequest);
 
-    List<ProjectResponse> toProjectResponseList(List<Project> projects);
+    public abstract List<ProjectResponse> toProjectResponseList(List<Project> projects);
+
+    @Named("objectKeyToUrl")
+    protected String objectKeyToUrl(String objectKey) {
+        if (objectKey == null || objectKey.trim().isEmpty()) return null;
+
+        try {
+            // 24 hours expiry
+            return minioService.getPresignedDownloadUrlFromObjectKey(objectKey, 3600 * 24);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }

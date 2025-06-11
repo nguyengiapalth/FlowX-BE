@@ -18,6 +18,7 @@ public class DepartmentResponse {
     String name;
     String description;
     String background;
+    Long managerId;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

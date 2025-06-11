@@ -14,7 +14,6 @@ import project.ii.flowx.applications.service.manage.ProjectMemberService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberCreateRequest;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberResponse;
-import project.ii.flowx.model.dto.projectmember.ProjectMemberUpdateRequest;
 import project.ii.flowx.shared.enums.MemberStatus;
 import project.ii.flowx.shared.enums.RoleDefault;
 
@@ -22,8 +21,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/project-member")
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 @CrossOrigin(origins = "*")
 @Tag(name = "Project Member", description = "Project Member API")

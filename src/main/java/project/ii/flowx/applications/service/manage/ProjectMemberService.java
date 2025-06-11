@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -33,6 +34,7 @@ public class ProjectMemberService {
     EntityLookupService entityLookupService;
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #projectMemberCreateRequest.getProjectId())")
     public ProjectMemberResponse createProjectMember(ProjectMemberCreateRequest projectMemberCreateRequest) {
         Project project = entityLookupService.getProjectById(projectMemberCreateRequest.getProjectId());
 
@@ -51,6 +53,7 @@ public class ProjectMemberService {
     }
 
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     public ProjectMemberResponse updateMemberRole(Long id, RoleDefault role) {
         ProjectMember projectMember = projectMemberRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Không tìm thấy project member với ID: " + id));
@@ -108,6 +111,7 @@ public class ProjectMemberService {
         return projectMemberMapper.toProjectMemberResponse(projectMember);
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectMemberResponse> getByProject(Long projectId) {
         List<ProjectMember> members = projectMemberRepository.findByProjectId(projectId);
         if (members.isEmpty()) {return List.of();}

@@ -29,6 +29,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         // Load user roles and authorities
         List<UserRoleResponse> roles = userRoleService.getGlobalRolesForUser(user.getId());
+        log.info("Found roles for user {}", user.getEmail());
         return UserPrincipal.create(user, roles);
     }
 }
