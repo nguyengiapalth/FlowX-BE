@@ -34,4 +34,6 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
     void deleteByScopeAndScopeId(RoleScope roleScope, long projectId);
 
     boolean existsByUserIdAndScopeAndScopeId(Long id, RoleScope scope, Long scopeId);
+
+    void deleteByUserIdAndRoleIdAndScopeAndScopeId(Long userId, Long roleId, RoleScope roleScope, Long scopeId);
 }

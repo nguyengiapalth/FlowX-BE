@@ -36,10 +36,11 @@ public class AuthorizationService {
         Long userId = getUserId();
         List<UserRoleResponse> userRoles = getUserRoles(userId);
 
-        return userRoles.stream()
+        boolean has = userRoles.stream()
                 .anyMatch(r -> r.getRole().getName().equals(roleName)
                         && r.getScope() == roleScope
                         && r.getScopeId().equals(scopeId));
+        return has;
     }
 
     public boolean hasProjectRole(String roleName, Long projectId) {
@@ -65,6 +66,11 @@ public class AuthorizationService {
 
     public boolean canAccessScope(Long targetId, ContentTargetType targetType) {
         if (targetType == ContentTargetType.GLOBAL) return true;
+        if (targetType == ContentTargetType.PRIVATE) {
+            // For PRIVATE content, user can only access their own content
+            Long userId = getUserId();
+            return userId.equals(targetId);
+        }
         if (targetType == ContentTargetType.DEPARTMENT)
             return hasDepartmentRole("MEMBER", targetId) || hasDepartmentRole("MANAGER", targetId);
         if (targetType == ContentTargetType.PROJECT)

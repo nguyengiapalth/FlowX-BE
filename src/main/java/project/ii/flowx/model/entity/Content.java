@@ -32,6 +32,9 @@ public class Content {
     @Column(columnDefinition = "TEXT")
     String body;
 
+    @Column(name = "subtitle", length = 500)
+    String subtitle;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude

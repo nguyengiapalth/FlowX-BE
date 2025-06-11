@@ -8,7 +8,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import project.ii.flowx.applications.events.FileEvent;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.applications.service.manage.UserActivityLogService;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;

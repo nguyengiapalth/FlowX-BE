@@ -16,6 +16,7 @@ import project.ii.flowx.model.dto.projectmember.ProjectMemberCreateRequest;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberResponse;
 import project.ii.flowx.model.dto.projectmember.ProjectMemberUpdateRequest;
 import project.ii.flowx.shared.enums.MemberStatus;
+import project.ii.flowx.shared.enums.RoleDefault;
 
 import java.util.List;
 
@@ -73,18 +74,42 @@ public class ProjectMemberController {
                     )
             }
     )
-    @PutMapping("/update/{id}")
-    public FlowXResponse<ProjectMemberResponse> updateProjectMember(
-            @PathVariable Long id, 
-            @RequestBody ProjectMemberUpdateRequest projectMemberUpdateRequest) {
+    @PutMapping("/{id}/role")
+    public FlowXResponse<ProjectMemberResponse> updateMemberRole(
+            @PathVariable Long id,
+            @RequestBody RoleDefault role) {
         return FlowXResponse.<ProjectMemberResponse>builder()
-                .data(projectMemberService.updateProjectMember(id, projectMemberUpdateRequest))
+                .data(projectMemberService.updateMemberRole(id, role))
                 .message("Project member updated successfully")
                 .code(200)
                 .build();
     }
 
-    // Bulk update status
+    @Operation(
+            summary = "Update member status",
+            description = "Updates the status of a project member.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Member status updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Project member not found"
+                    )
+            }
+    )
+    @PutMapping("/{id}/status")
+    public FlowXResponse<ProjectMemberResponse> updateMemberStatus(
+            @PathVariable Long id,
+            @RequestParam MemberStatus status) {
+        return FlowXResponse.<ProjectMemberResponse>builder()
+                .data(projectMemberService.updateMemberStatus(id, status))
+                .message("Member status updated successfully")
+                .code(200)
+                .build();
+    }
+
     @Operation(
             summary = "Bulk update member status",
             description = "Updates the status of multiple project members at once.",
@@ -126,7 +151,7 @@ public class ProjectMemberController {
             }
     )
     @DeleteMapping("/delete/{id}")
-    public FlowXResponse<Void> deleteProjectMember(@PathVariable Long id) {
+    public FlowXResponse<Void> deleteMember(@PathVariable Long id) {
         projectMemberService.deleteProjectMember(id);
         return FlowXResponse.<Void>builder()
                 .message("Project member deleted successfully")
@@ -149,7 +174,7 @@ public class ProjectMemberController {
             }
     )
     @GetMapping("/get/{id}")
-    public FlowXResponse<ProjectMemberResponse> getProjectMemberById(@PathVariable Long id) {
+    public FlowXResponse<ProjectMemberResponse> getPMemberById(@PathVariable Long id) {
         return FlowXResponse.<ProjectMemberResponse>builder()
                 .data(projectMemberService.getProjectMemberById(id))
                 .message("Project member retrieved successfully")
@@ -157,171 +182,24 @@ public class ProjectMemberController {
                 .build();
     }
 
-    // Lấy danh sách members theo project ID
     @Operation(
-            summary = "Get members by project ID",
-            description = "Retrieves all members of a specific project.",
-            parameters = {
-                    @Parameter(name = "projectId", description = "ID of the project")
-            },
+            summary = "Get all project members by project ID",
+            description = "Retrieves a list of all project members in the system.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Project members retrieved successfully"
+                            description = "List of project members retrieved successfully"
                     )
             }
     )
-    @GetMapping("/project/{projectId}")
-    public FlowXResponse<List<ProjectMemberResponse>> getMembersByProjectId(
-            @PathVariable Long projectId) {
-        log.info("Getting members for project ID: {}", projectId);
+    @GetMapping("/get-by-project/{projectId}")
+    public FlowXResponse<List<ProjectMemberResponse>> getMembersByProjectId(@PathVariable Long projectId) {
+        log.info("Fetching all project members for project ID: {}", projectId);
         return FlowXResponse.<List<ProjectMemberResponse>>builder()
-                .data(projectMemberService.getByProjectId(projectId))
-                .message("Project members retrieved successfully")
+                .data(projectMemberService.getByProject(projectId))
+                .message("List of project members retrieved successfully")
                 .code(200)
                 .build();
     }
 
-    // Lấy danh sách projects theo user ID
-    @Operation(
-            summary = "Get projects by user ID",
-            description = "Retrieves all projects that a user is a member of.",
-            parameters = {
-                    @Parameter(name = "userId", description = "ID of the user")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "User projects retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/user/{userId}")
-    public FlowXResponse<List<ProjectMemberResponse>> getProjectsByUserId(
-            @PathVariable Long userId) {
-        log.info("Getting projects for user ID: {}", userId);
-        return FlowXResponse.<List<ProjectMemberResponse>>builder()
-                .data(projectMemberService.getByUserId(userId))
-                .message("User projects retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Update member status",
-            description = "Updates the status of a project member.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Member status updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Project member not found"
-                    )
-            }
-    )
-    @PutMapping("/{id}/status")
-    public FlowXResponse<ProjectMemberResponse> updateMemberStatus(
-            @PathVariable Long id,
-            @RequestParam MemberStatus status) {
-        return FlowXResponse.<ProjectMemberResponse>builder()
-                .data(projectMemberService.updateMemberStatus(id, status))
-                .message("Member status updated successfully")
-                .code(200)
-                .build();
-    }
-
-    // Lấy active members của project
-    @Operation(
-            summary = "Get active members by project ID",
-            description = "Retrieves all active members of a specific project.",
-            parameters = {
-                    @Parameter(name = "projectId", description = "ID of the project")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Active project members retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/project/{projectId}/active")
-    public FlowXResponse<List<ProjectMemberResponse>> getActiveMembers(
-            @PathVariable Long projectId) {
-        log.info("Getting active members for project ID: {}", projectId);
-        return FlowXResponse.<List<ProjectMemberResponse>>builder()
-                .data(projectMemberService.getActiveMembers(projectId))
-                .message("Active project members retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-
-//    // Cache management
-//    @Operation(
-//            summary = "Clear all cache",
-//            description = "Clears all cached data for project members. Use with caution.",
-//            responses = {
-//                    @ApiResponse(
-//                            responseCode = "200",
-//                            description = "Cache cleared successfully"
-//                    )
-//            }
-//    )
-//    @PostMapping("/cache/clear")
-//    public FlowXResponse<Void> clearCache() {
-//        log.info("Clearing all project member cache");
-//        projectMemberService.clearAllCache();
-//        return FlowXResponse.<Void>builder()
-//                .message("Cache cleared successfully")
-//                .code(200)
-//                .build();
-//    }
-//
-//    @Operation(
-//            summary = "Clear project members cache",
-//            description = "Clears cached data for a specific project's members.",
-//            parameters = {
-//                    @Parameter(name = "projectId", description = "ID of the project")
-//            },
-//            responses = {
-//                    @ApiResponse(
-//                            responseCode = "200",
-//                            description = "Project cache cleared successfully"
-//                    )
-//            }
-//    )
-//    @PostMapping("/cache/clear/project/{projectId}")
-//    public FlowXResponse<Void> clearProjectCache(@PathVariable Long projectId) {
-//        log.info("Clearing cache for project ID: {}", projectId);
-//        projectMemberService.clearProjectMembersCache(projectId);
-//        return FlowXResponse.<Void>builder()
-//                .message("Project cache cleared successfully")
-//                .code(200)
-//                .build();
-//    }
-//
-//    @Operation(
-//            summary = "Clear user projects cache",
-//            description = "Clears cached data for a specific user's projects.",
-//            parameters = {
-//                    @Parameter(name = "userId", description = "ID of the user")
-//            },
-//            responses = {
-//                    @ApiResponse(
-//                            responseCode = "200",
-//                            description = "User cache cleared successfully"
-//                    )
-//            }
-//    )
-//    @PostMapping("/cache/clear/user/{userId}")
-//    public FlowXResponse<Void> clearUserCache(@PathVariable Long userId) {
-//        log.info("Clearing cache for user ID: {}", userId);
-//        projectMemberService.clearUserProjectsCache(userId);
-//        return FlowXResponse.<Void>builder()
-//                .message("User cache cleared successfully")
-//                .code(200)
-//                .build();
-//    }
 }

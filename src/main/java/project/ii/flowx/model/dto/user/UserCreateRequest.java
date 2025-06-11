@@ -52,4 +52,7 @@ public class UserCreateRequest {
     @Enumerated(EnumType.STRING)
     @Schema(description = "Status of the user", example = "ACTIVE")
     UserStatus status;
+
+    @Schema(description = "Gender of the user", example = "MALE")
+    String gender;
 }

@@ -18,20 +18,11 @@ import java.time.LocalDate;
 @Schema(description = "User Update Request")
 public class UserUpdateRequest {
 
-    @Schema(description = "Avatar URL of the user", example = "https://example.com/avatar.jpg")
-    String avatar;
-
-    @Schema(description = "Background image URL of the user", example = "https://example.com/background.jpg")
-    String background;
-
     @Schema(description = "Phone number of the user", example = "+1234567890")
     String phoneNumber;
 
     @Schema(description = "Address of the user", example = "123 Main St, City, Country")
     String address;
-
-    @Schema(description = "Position of the user", example = "Software Engineer")
-    String position;
 
     @Schema(description = "Bio of the user", example = "I am a software engineer with 5 years of experience")
     String bio;
@@ -53,4 +44,7 @@ public class UserUpdateRequest {
 
     @Schema(description = "Date of birth of the user", example = "1990-01-01")
     private LocalDate dateOfBirth;
+
+    @Schema(description = "Gender of the user", example = "MALE")
+    private String gender;
 }

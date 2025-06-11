@@ -31,48 +31,6 @@ public class DepartmentController {
     DepartmentService departmentService;
 
     @Operation(
-            summary = "Get all departments",
-            description = "Retrieves a list of all departments in the system.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Departments retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/get-all")
-    public FlowXResponse<List<DepartmentResponse>> getAllDepartments() {
-        return FlowXResponse.<List<DepartmentResponse>>builder()
-                .data(departmentService.getAllDepartments())
-                .message("Departments retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Get department by ID",
-            description = "Retrieves a department by its ID.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Department retrieved successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Department not found"
-                    )
-            }
-    )
-    @GetMapping("/get/{id}")
-    public FlowXResponse<DepartmentResponse> getDepartmentById(@PathVariable Long id) {
-        return FlowXResponse.<DepartmentResponse>builder()
-                .data(departmentService.getDepartmentById(id))
-                .message("Department retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
             summary = "Create a new department",
             description = "Creates a new department in the system.",
             responses = {
@@ -125,6 +83,59 @@ public class DepartmentController {
     }
 
     @Operation(
+            summary = "Update department manager",
+            description = "Updates the manager of a department.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the department to be updated")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Department manager updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Department not found"
+                    )
+            }
+    )
+    @PutMapping("/update-manager/{id}")
+    public FlowXResponse<DepartmentResponse> updateDepartmentManager(@PathVariable Long id, @RequestBody Long newManagerId) {
+        return FlowXResponse.<DepartmentResponse>builder()
+                .data(departmentService.updateManager(id, newManagerId))
+                .message("Department manager updated successfully")
+                .code(200)
+                .build();
+    }
+
+
+    @Operation(
+            summary = "Update department background",
+            description = "Updates the background image of a department.",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the department to be updated")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Department background updated successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Department not found"
+                    )
+            }
+    )
+    @PutMapping("/update-background/{id}")
+    public FlowXResponse<DepartmentResponse> updateDepartmentBackground(@PathVariable Long id, @RequestBody String background) {
+        return FlowXResponse.<DepartmentResponse>builder()
+                .data(departmentService.updateDepartmentBackground(id, background))
+                .message("Department background updated successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
             summary = "Delete a department",
             description = "Deletes a department from the system.",
             responses = {
@@ -148,15 +159,31 @@ public class DepartmentController {
     }
 
     @Operation(
-            summary = "Update department background",
-            description = "Updates the background image of a department.",
-            parameters = {
-                    @Parameter(name = "id", description = "ID of the department to be updated")
-            },
+            summary = "Get all departments",
+            description = "Retrieves a list of all departments in the system.",
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Department background updated successfully"
+                            description = "Departments retrieved successfully"
+                    )
+            }
+    )
+    @GetMapping("/get-all")
+    public FlowXResponse<List<DepartmentResponse>> getAllDepartments() {
+        return FlowXResponse.<List<DepartmentResponse>>builder()
+                .data(departmentService.getAllDepartments())
+                .message("Departments retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
+            summary = "Get department by ID",
+            description = "Retrieves a department by its ID.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Department retrieved successfully"
                     ),
                     @ApiResponse(
                             responseCode = "404",
@@ -164,15 +191,14 @@ public class DepartmentController {
                     )
             }
     )
-    @PutMapping("/update-background/{id}")
-    public FlowXResponse<DepartmentResponse> updateDepartmentBackground(
-            @PathVariable Long id,
-            @RequestBody DepartmentBackgroundUpdateRequest request) {
-
+    @GetMapping("/get/{id}")
+    public FlowXResponse<DepartmentResponse> getDepartmentById(@PathVariable Long id) {
+        log.info("Fetching department with id: {} from database", id);
         return FlowXResponse.<DepartmentResponse>builder()
-                .data(departmentService.updateDepartmentBackground(id, request))
-                .message("Department background updated successfully")
+                .data(departmentService.getDepartmentById(id))
+                .message("Department retrieved successfully")
                 .code(200)
                 .build();
     }
+
 }

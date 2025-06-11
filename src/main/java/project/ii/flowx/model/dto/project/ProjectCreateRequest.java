@@ -5,10 +5,12 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import project.ii.flowx.model.entity.User;
 import project.ii.flowx.shared.enums.PriorityLevel;
 import project.ii.flowx.shared.enums.ProjectStatus;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Schema(description = "Project Create Request")
 @Data
@@ -42,4 +44,7 @@ public class ProjectCreateRequest {
 
     @Schema(description = "Priority level of the project", example = "HIGH")
     PriorityLevel priority;
+
+    @Schema(description = "List of user IDs to be added as members to the project")
+    List<Long> memberIds; // List of user IDs to be added as members to the project
 }

@@ -2,6 +2,7 @@ package project.ii.flowx.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.proxy.HibernateProxy;
@@ -16,7 +17,10 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "departments")
+@Table(name = "departments", indexes = {
+    @jakarta.persistence.Index(name = "idx_department_name", columnList = "name"),
+    @jakarta.persistence.Index(name = "idx_department_manager_id", columnList = "manager_id")
+})
 public class Department {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +35,9 @@ public class Department {
 
     @Column(name = "background")
     String background;
+
+    @Column(name  = "manager_id", columnDefinition = "bigint default 0")
+    Long managerId; // ID of the user who is the manager of this department
 
     @CreationTimestamp
     @Column(name = "created_at")

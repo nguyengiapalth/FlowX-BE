@@ -13,6 +13,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.exceptionhandler.FlowXError;
+import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.entity.Notification;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.dto.notification.NotificationResponse;
@@ -34,20 +36,14 @@ import java.util.List;
 public class NotificationService {
      NotificationRepository notificationRepository;
      NotificationMapper notificationMapper;
-     EntityLookupService entityLookupService;
-
     SimpMessagingTemplate messagingTemplate;
 
     @Transactional()
-    @PreAuthorize("isAuthenticated()")
     public NotificationResponse createNotification(NotificationCreateRequest createRequest) {
-        log.info("Creating notification for user: {}", createRequest.getUserId());
-
         Notification notification = notificationMapper.toNotification(createRequest);
         notification.setIsRead(false);
         Notification savedNotification = notificationRepository.save(notification);
 
-        log.info("Successfully created notification with ID: {}", savedNotification.getId());
         // Publish the notification to the user's WebSocket channel
         messagingTemplate.convertAndSend("/topic/notifications/" + createRequest.getUserId(),
             notificationMapper.toNotificationResponse(savedNotification));
@@ -58,66 +54,38 @@ public class NotificationService {
     @Transactional()
     @PreAuthorize("isAuthenticated()")
     public void markAsRead(Long id) {
-        log.info("Marking notification as read - ID: {}", id);
-
-        Notification notification = entityLookupService.getNotificationById(id);
-        notification.setIsRead(true);
-        notification.setReadAt(LocalDateTime.now());
-        notificationRepository.save(notification);
-
-        log.info("Successfully marked notification {} as read", id);
+        notificationRepository.markAsReadById(id);
     }
 
     @Transactional()
     @PreAuthorize("isAuthenticated()")
     public void markAllAsRead() {
-        var context = SecurityContextHolder.getContext();
-        var authentication = context.getAuthentication();
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Long currentUserId = userPrincipal.getId();
-
-        log.info("Marking all notifications as read for user: {}", currentUserId);
-
-        List<Notification> notifications = notificationRepository.findByUserId(currentUserId);
-        for (Notification notification : notifications) {
-            if (notification.getIsRead() == true) continue;
-            notification.setIsRead(true);
-            notification.setReadAt(LocalDateTime.now());
-        }
-
-        notificationRepository.saveAll(notifications);
-        log.info("Successfully marked all notifications as read for user: {}", currentUserId);
+        Long currentUserId = getUserId();
+        notificationRepository.markAllAsReadByUserId(currentUserId);
     }
 
     @Transactional()
     @PreAuthorize("isAuthenticated()")
     public void markAsUnread(Long id) {
-        log.info("Marking notification as unread - ID: {}", id);
-
-        Notification notification = entityLookupService.getNotificationById(id);
-        notification.setIsRead(false);
-        notification.setReadAt(null);
-        notificationRepository.save(notification);
-
-        log.info("Successfully marked notification {} as unread", id);
+        notificationRepository.markAsUnreadById(id);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public Page<NotificationResponse> getMyNotifications(int page) {
-        var context = SecurityContextHolder.getContext();
-        var authentication = context.getAuthentication();
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        Long currentUserId = userPrincipal.getId();
-
-        log.info("Fetching notifications for user: {}", currentUserId);
+        Long currentUserId = getUserId();
 
         Pageable pageable = PageRequest.of(page, 10);
-
         Page<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId,pageable );
+        return notifications.map(notificationMapper::toNotificationResponse);
+    }
 
-        Page<NotificationResponse> responses = notifications.map(notificationMapper::toNotificationResponse);
-        log.info("Successfully fetched {} notifications for user: {}", 10, currentUserId);
-        return responses;
+    private Long getUserId() {
+        var context = SecurityContextHolder.getContext();
+        if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
+            throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");
+
+        UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
+        return userPrincipal.getId();
     }
 }

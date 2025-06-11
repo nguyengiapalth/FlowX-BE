@@ -26,7 +26,7 @@ public enum FlowXError {
     ALREADY_EXISTS( 409, "Already exists", HttpStatusCode.valueOf(409)),
 
     INTERNAL_SERVER_ERROR( 500, "Internal server error", HttpStatusCode.valueOf(500)),
-    ;
+    INVALID_INPUT( 400, "Invalid input", HttpStatusCode.valueOf(400)),;
 
     private final int code;
     private final String message;

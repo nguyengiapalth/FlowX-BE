@@ -49,10 +49,10 @@ public class AuthenticationController {
         AuthenticationResult result = authenticationService.authenticate(request);
         
         // Set refresh token as HTTP-only cookie
-        setRefreshTokenCookie(httpResponse, result.refreshToken);
+        setRefreshTokenCookie(httpResponse, result.refreshToken());
         
         return FlowXResponse.<AuthenticationResponse>builder()
-                .data(result.response)
+                .data(result.response())
                 .code(200)
                 .message("Authentication successful")
                 .build();
@@ -84,9 +84,7 @@ public class AuthenticationController {
 
     @PostMapping("/logout")
     @SecurityRequirement(name = "bearerAuth")
-    public FlowXResponse<Void> logout(
-            @RequestBody LogoutRequest request,
-            HttpServletResponse httpResponse) {
+    public FlowXResponse<Void> logout(@RequestBody LogoutRequest request, HttpServletResponse httpResponse) {
         authenticationService.logout(request);
         
         // Clear refresh token cookie
@@ -110,10 +108,10 @@ public class AuthenticationController {
             AuthenticationResult result = authenticationService.authenticateByGoogleOAuth2(email);
             
             // Set refresh token as HTTP-only cookie
-            setRefreshTokenCookie(httpResponse, result.refreshToken);
+            setRefreshTokenCookie(httpResponse, result.refreshToken());
             
             return FlowXResponse.<AuthenticationResponse>builder()
-                    .data(result.response)
+                    .data(result.response())
                     .code(200)
                     .message("Google authentication successful")
                     .build();

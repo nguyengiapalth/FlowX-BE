@@ -5,23 +5,29 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.model.entity.Department;
 import project.ii.flowx.model.entity.Project;
+import project.ii.flowx.model.entity.ProjectMember;
 import project.ii.flowx.model.repository.ProjectRepository;
+import project.ii.flowx.model.repository.ProjectMemberRepository;
 import project.ii.flowx.model.dto.project.ProjectCreateRequest;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.project.ProjectUpdateRequest;
-import project.ii.flowx.model.dto.project.ProjectBackgroundUpdateRequest;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.ProjectMapper;
+import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.ProjectStatus;
+import project.ii.flowx.shared.enums.RoleDefault;
+import project.ii.flowx.shared.enums.MemberStatus;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @Slf4j
@@ -29,6 +35,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProjectService {
     ProjectRepository projectRepository;
+    ProjectMemberRepository projectMemberRepository;
     ProjectMapper projectMapper;
     EntityLookupService entityLookupService;
 
@@ -38,19 +45,60 @@ public class ProjectService {
     public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest) {
         // Validate department ID
         Department department = entityLookupService.getDepartmentById(projectCreateRequest.getDepartmentId());
-
         Project project = projectMapper.toProject(projectCreateRequest);
         project.setDepartment(department);
-        log.info("Creating new project for department ID: {}", department.getId());
         
         // Set default values if not provided
-        if (project.getStatus() == null) project.setStatus(ProjectStatus.NOT_STARTED);
-        if (project.getStatus() == ProjectStatus.IN_PROGRESS) project.setStartDate(LocalDate.now());
-
+        if (project.getStatus() == null) {
+            project.setStatus(ProjectStatus.NOT_STARTED);
+        }
+        
+        // If project is set to IN_PROGRESS, set start date
+        if (project.getStatus() == ProjectStatus.IN_PROGRESS && project.getStartDate() == null) {
+            project.setStartDate(LocalDate.now());
+        }
 
         project = projectRepository.save(project);
-        log.info("Created new project with ID: {}", project.getId());
+        
+        // Add members to the project if memberIds is provided
+        if (projectCreateRequest.getMemberIds() != null && !projectCreateRequest.getMemberIds().isEmpty()) {
+            log.info("Adding {} members to project {}", projectCreateRequest.getMemberIds().size(), project.getId());
+            addMembersToProject(project.getId(), projectCreateRequest.getMemberIds());
+        }
+        
         return projectMapper.toProjectResponse(project);
+    }
+
+    // Helper method to add members to project
+    private void addMembersToProject(Long projectId, List<Long> memberIds) {
+        List<ProjectMember> membersToAdd = new ArrayList<>();
+        Project project = entityLookupService.getProjectById(projectId);
+        
+        for (Long userId : memberIds) {
+            // Validate user exists and get user entity
+            var user = entityLookupService.getUserById(userId);
+            
+            // Check if user is already a member of this project
+            boolean memberExists = projectMemberRepository.existsByProjectIdAndUserId(projectId, userId);
+            if (!memberExists) {
+                ProjectMember projectMember = ProjectMember.builder()
+                    .project(project)
+                    .user(user)
+                    .role(RoleDefault.MEMBER) // Default role
+                    .status(MemberStatus.ACTIVE)
+                    .joinDate(LocalDate.now())
+                    .build();
+                
+                membersToAdd.add(projectMember);
+            } else {
+                log.warn("User {} is already a member of project {}", userId, projectId);
+            }
+        }
+        
+        if (!membersToAdd.isEmpty()) {
+            projectMemberRepository.saveAll(membersToAdd);
+            log.info("Successfully added {} members to project {}", membersToAdd.size(), projectId);
+        }
     }
 
     @Transactional
@@ -70,7 +118,6 @@ public class ProjectService {
     public ProjectResponse updateProjectStatus(Long id, ProjectStatus status) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
-
         project.setStatus(status);
 
         // If project is in progress, set start date if not already set
@@ -100,6 +147,17 @@ public class ProjectService {
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
+    public ProjectResponse updateProjectBackground(Long id, String background) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
+
+        project.setBackground(background);
+        project = projectRepository.save(project);
+        return projectMapper.toProjectResponse(project);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
     public void deleteProject(Long id) {
         projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -122,11 +180,9 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #departmentId)")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MEMBER', #departmentId)")
     public List<ProjectResponse> getProjectsByDepartmentId(long departmentId) {
         List<Project> projects = projectRepository.findByDepartmentId(departmentId);
-
-        log.info("Projects found for department ID {} : {}", departmentId, projects);
         return projectMapper.toProjectResponseList(projects);
     }
 
@@ -134,22 +190,22 @@ public class ProjectService {
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     public List<ProjectResponse> getProjectsByStatus(ProjectStatus status) {
         List<Project> projects = projectRepository.findByStatus(status);
-        log.info("Projects found with status {} : {}", status, projects);
         return projectMapper.toProjectResponseList(projects);
     }
 
-    @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MANAGER', #id)")
-    public ProjectResponse updateProjectBackground(Long id, ProjectBackgroundUpdateRequest request) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
-        
-        if (request.getBackground() != null) {
-            project.setBackground(request.getBackground());
-            log.info("Updated background for project {}", id);
-        }
-        
-        project = projectRepository.save(project);
-        return projectMapper.toProjectResponse(project);
+    public List<ProjectResponse> getMyProjects() {
+        Long userId = getUserId();
+        List<Project> projects = projectRepository.findByMemberId(userId);
+        if (projects.isEmpty()) {return List.of();}
+        return projectMapper.toProjectResponseList(projects);
+    }
+
+    private Long getUserId() {
+        var context = SecurityContextHolder.getContext();
+        if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
+            throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");
+
+        UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
+        return userPrincipal.getId();
     }
 }

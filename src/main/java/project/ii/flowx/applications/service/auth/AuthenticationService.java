@@ -13,22 +13,18 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import project.ii.flowx.model.entity.InvalidToken;
 import project.ii.flowx.model.entity.User;
-import project.ii.flowx.model.dto.auth.ChangePasswordRequest;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.auth.AuthenticationRequest;
 import project.ii.flowx.model.dto.auth.AuthenticationResponse;
 import project.ii.flowx.model.dto.auth.LogoutRequest;
-import project.ii.flowx.model.dto.auth.RefreshTokenRequest;
 import project.ii.flowx.model.dto.auth.RefreshTokenResponse;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
 import project.ii.flowx.model.repository.UserRepository;
@@ -46,7 +42,6 @@ import java.util.stream.Collectors;
 public class AuthenticationService {
     final UserRepository userRepository;
     final InvalidTokenRepository invalidTokenRepository;
-    final PasswordEncoder passwordEncoder;
     final AuthenticationManager authenticationManager;
     final UserDetailsServiceImpl userDetailsService;
 
@@ -59,21 +54,11 @@ public class AuthenticationService {
     @Value("${spring.jwt.refresh-expiration}")
     long refreshExpiration;
 
-    public static class AuthenticationResult {
-        public final AuthenticationResponse response;
-        public final String refreshToken;
-        
-        public AuthenticationResult(AuthenticationResponse response, String refreshToken) {
-            this.response = response;
-            this.refreshToken = refreshToken;
-        }
-    }
+    public record AuthenticationResult(AuthenticationResponse response, String refreshToken) { }
 
     @Transactional(readOnly = true)
     public AuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         try {
-            log.info("Authentication request for user {}", authenticationRequest.getEmail());
-
             User user = userRepository.findByEmail(authenticationRequest.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -95,10 +80,8 @@ public class AuthenticationService {
 
             return new AuthenticationResult(response, refreshToken);
         } catch (BadCredentialsException e) {
-            log.warn("Sai mật khẩu cho user {}", authenticationRequest.getEmail());
             throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
         } catch (AuthenticationException e) {
-            log.error("Lỗi xác thực khác: {}", e.getMessage());
             throw e;
         }
     }
@@ -114,8 +97,6 @@ public class AuthenticationService {
 
         String token = generateToken((UserPrincipal) userDetails);
         String refreshToken = generateRefreshToken((UserPrincipal) userDetails);
-        log.info("Authentication request for user {}", email);
-        log.info("Authorities: {}", userDetails.getAuthorities());
 
         AuthenticationResponse response = AuthenticationResponse.builder()
                 .token(token)
@@ -139,13 +120,12 @@ public class AuthenticationService {
             InvalidToken invalidToken = new InvalidToken();
             invalidToken.setToken(token);
             invalidTokenRepository.save(invalidToken);
-            log.info("Token invalidated successfully");
         } catch (JWTVerificationException e) {
-            log.info("Token already expired or invalid: {}", e.getMessage());
+            // Token already expired or invalid
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public RefreshTokenResponse refreshToken(String refreshTokenString) {
         try {
             // Verify refresh token

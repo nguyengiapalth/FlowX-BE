@@ -11,6 +11,7 @@ import project.ii.flowx.shared.enums.ProjectStatus;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -19,7 +20,11 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "projects")
+@Table(name = "projects", indexes = {
+    @jakarta.persistence.Index(name = "idx_project_department_id", columnList = "department_id"),
+    @jakarta.persistence.Index(name = "idx_project_status", columnList = "status"),
+    @jakarta.persistence.Index(name = "idx_project_dates", columnList = "start_date, end_date")
+})
 @ToString
 public class Project {
     @Id
@@ -42,12 +47,17 @@ public class Project {
     @Column(name = "end_date")
     LocalDate endDate;
 
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.ALL})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     Department department;
+
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, 
+               cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, 
+               orphanRemoval = true)
+    @ToString.Exclude
+    List<ProjectMember> members;
 
     @CreationTimestamp
     @Column(name = "created_at")

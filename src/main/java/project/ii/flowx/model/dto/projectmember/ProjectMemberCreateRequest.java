@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.shared.enums.MemberStatus;
+import project.ii.flowx.shared.enums.RoleDefault;
 
 @Schema(description = "Project Member Create Request")
 @Data
@@ -20,7 +21,7 @@ public class ProjectMemberCreateRequest {
     Long userId;
 
     @Schema(description = "Role of the user in the project, MANAGER or MEMBER", example = "MEMBER")
-    String role;
+    RoleDefault role;
 
     @Schema(description = "Status of the member in the project", example = "ACTIVE")
     MemberStatus status;

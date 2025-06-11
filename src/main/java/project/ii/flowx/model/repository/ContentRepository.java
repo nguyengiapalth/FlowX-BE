@@ -11,10 +11,10 @@ import java.util.List;
 
 @Repository
 public interface ContentRepository extends JpaRepository<Content, Long> {
-    List<Content> findByParentId(Long parentId);
+    List<Content> findByParentIdOrderByCreatedAtAsc(Long parentId);
 
     @EntityGraph(attributePaths = {"replies"})
-    List<Content> findByContentTargetTypeAndTargetId(ContentTargetType contentTargetType, Long targetId);
+    List<Content> findByContentTargetTypeAndTargetIdOrderByCreatedAtDesc(ContentTargetType contentTargetType, Long targetId);
 
-    List<Content> findByAuthor(User user);
+    List<Content> findByAuthorOrderByCreatedAtDesc(User user);
 }

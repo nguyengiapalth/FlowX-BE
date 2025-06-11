@@ -39,8 +39,7 @@ public class ContentService {
     AuthorizationService authorizationService;
 
     @Transactional
-    @PreAuthorize( "hasAuthority('ROLE_MANAGER') " +
-            "or @authorize.canAccessScope(#request.targetId, #request.contentTargetType)" )
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#request.targetId, #request.contentTargetType)")
     public ContentResponse createContent(ContentCreateRequest request) {
          Long userId = getUserId();
          User author = entityLookupService.getUserById(userId);
@@ -48,7 +47,7 @@ public class ContentService {
         Content content = contentMapper.toContent(request);
         if (request.getParentId() != -1 && request.getParentId() != 0) {
             Content parent = contentRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Parent content not found"));
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Parent content not found"));
             if(parent.getDepth() >= 3){
                 content.setDepth(parent.getDepth());
                 content.setParent(parent.getParent());
@@ -64,7 +63,6 @@ public class ContentService {
         content.setAuthor(author);
         content.setHasFile(false); // Will be updated later when files are uploaded
         
-        log.info("Creating content with body: {}", content.getBody());
         content = contentRepository.save(content);
         
         ContentResponse response = contentMapper.toContentResponse(content);
@@ -75,7 +73,7 @@ public class ContentService {
     @PreAuthorize("@authorize.isContentAuthor(id)")
     public ContentResponse updateContent(Long id, ContentUpdateRequest request) {
         Content content = contentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Content not found"));
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
         
         contentMapper.updateContentFromRequest(content, request);
         // Note: hasFile will be managed separately when files are uploaded/removed
@@ -86,45 +84,64 @@ public class ContentService {
     }
 
     @Transactional
-    @PreAuthorize("@authorize.isContentAuthor(#id) " +
-            "or hasAuthority('ROLE_MANAGER') or @authorize.isContentManager(#id)")
+    @PreAuthorize("@authorize.canAccessContent(#contentId)")
+    public void updateHasFileFlag(Long contentId) {
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
+
+        try {
+            List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.CONTENT, contentId);
+            boolean hasFiles = !files.isEmpty();
+
+            if (content.isHasFile() != hasFiles) {
+                content.setHasFile(hasFiles);
+                contentRepository.save(content);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    @Transactional
+    @PreAuthorize("@authorize.isContentAuthor(#id) or hasAuthority('ROLE_MANAGER') or @authorize.isContentManager(#id)")
     public void deleteContent(Long id) {
         Content content = contentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Content not found"));
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
         contentRepository.delete(content);
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize( "hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize( "hasAnyAuthority('ROLE_MANAGER', 'ROLE_USER')")
     public List<ContentResponse> getAllContents() {
         List<Content> contents = contentRepository.findAll();
-        log.info("Found {} contents in database", contents.size());
-        
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        log.info("Mapped to {} content responses", responses.size());
-        
-        for (ContentResponse response : responses) {
-            log.info("Content ID: {}, ParentID: {}, Body: {}, Author: {}", 
-                response.getId(), response.getParentId(), 
-                response.getBody(), response.getAuthor() != null ? response.getAuthor().getFullName() : "null");
-        }
-        
+        // Filter out contents that the user cannot access
+        responses = filterAccessibleContents(responses);
         return populateFilesList(responses);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#targetId, #contentTargetType)")
     public List<ContentResponse> getContentsByTargetTypeAndId(ContentTargetType contentTargetType, Long targetId) {
-        log.info("Getting content by target type and id in database");
-        List<Content> contents = contentRepository.findByContentTargetTypeAndTargetId(contentTargetType, targetId);
+        List<Content> contents = contentRepository.findByContentTargetTypeAndTargetIdOrderByCreatedAtDesc(contentTargetType, targetId);
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
+        // Filter out contents that the user cannot access
+        responses = filterAccessibleContents(responses);
+        return populateFilesList(responses);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContentResponse> getContentsByUser(Long userId) {
+        User user = entityLookupService.getUserById(userId);
+        List<Content> contents = contentRepository.findByAuthorOrderByCreatedAtDesc(user);
+        List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
+        // Filter out contents that the user cannot access
+        responses = filterAccessibleContents(responses);
         return populateFilesList(responses);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessContent(#parentId)")
     public List<ContentResponse> getContentsByParent(Long parentId) {
-        List<Content> contents = contentRepository.findByParentId(parentId);
+        List<Content> contents = contentRepository.findByParentIdOrderByCreatedAtAsc(parentId);
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
         return populateFilesList(responses);
     }
@@ -133,7 +150,7 @@ public class ContentService {
     @PostAuthorize( "hasAuthority('ROLE_MANAGER') or @authorize.canAccessContent(#id)" )
     public ContentResponse getContentById(Long id) {
         Content content = contentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Content not found"));
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
         ContentResponse response = contentMapper.toContentResponse(content);
         return populateFiles(response);
     }
@@ -149,9 +166,7 @@ public class ContentService {
 
     private ContentResponse populateFiles(ContentResponse contentResponse) {
         if (contentResponse == null) return null;
-
         try {
-
             if (contentResponse.isHasFile()) {
                 // Only call fileService if hasFile is true
                 List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.CONTENT, contentResponse.getId());
@@ -165,7 +180,6 @@ public class ContentService {
                         contentRepository.save(content);
                     }
                     contentResponse.setHasFile(false);
-                    log.info("Updated hasFile to false for content {} - no files found", contentResponse.getId());
                 } else {
                     contentResponse.setHasFile(true);
                 }
@@ -183,7 +197,6 @@ public class ContentService {
                 contentResponse.setReplies(populatedReplies);
             }
         } catch (Exception e) {
-            log.warn("Failed to populate files for content {}: {}", contentResponse.getId(), e.getMessage());
             contentResponse.setFiles(List.of());
             contentResponse.setHasFile(false);
         }
@@ -197,35 +210,9 @@ public class ContentService {
                 .toList();
     }
 
-    @Transactional
-    @PreAuthorize("@authorize.canAccessContent(#contentId)")
-    public void updateHasFileFlag(Long contentId) {
-        Content content = contentRepository.findById(contentId)
-                .orElseThrow(() -> new IllegalArgumentException("Content not found"));
-        
-        try {
-            List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.CONTENT, contentId);
-            boolean hasFiles = !files.isEmpty();
-            
-            if (content.isHasFile() != hasFiles) {
-                content.setHasFile(hasFiles);
-                contentRepository.save(content);
-                log.info("Updated hasFile flag for content {} to {}", contentId, hasFiles);
-            }
-        } catch (Exception e) {
-            log.warn("Failed to update hasFile flag for content {}: {}", contentId, e.getMessage());
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public List<ContentResponse> getContentsByUser(Long userId) {
-        User user = entityLookupService.getUserById(userId);
-        List<Content> contents = contentRepository.findByAuthor(user);
-        List<ContentResponse> responses = contentMapper.toContentResponseList(contents)
-                .stream()
-                .filter(response -> authorizationService.canAccessContent(response.getId()))
+    private List<ContentResponse> filterAccessibleContents(List<ContentResponse> contents) {
+        return contents.stream()
+                .filter(content -> authorizationService.canAccessContent(content.getId()))
                 .collect(Collectors.toList());
-
-        return populateFilesList(responses);
     }
 }

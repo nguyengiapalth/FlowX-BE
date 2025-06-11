@@ -229,29 +229,6 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Update my avatar and background",
-            description = "Updates the avatar and/or background of the currently authenticated user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Avatar/background updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "User not found"
-                    )
-            }
-    )
-    @PutMapping("/my-avatar-background")
-    public FlowXResponse<UserResponse> updateMyAvatarAndBackground(@RequestBody UserAvatarUpdateRequest request) {
-        return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateMyAvatarAndBackground(request))
-                .message("Avatar and background updated successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
             summary = "Update my avatar",
             description = "Updates the avatar of the currently authenticated user.",
             responses = {
@@ -267,8 +244,11 @@ public class UserController {
     )
     @PutMapping("/my-avatar")
     public FlowXResponse<UserResponse> updateMyAvatar(@RequestBody String avatar) {
+        log.info("Updating avatar for user: {}", avatar);
+        // trim the avatar string to remove any leading or trailing whitespace
+        String cleaned = avatar.substring(1, avatar.length() - 1);
         return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateMyAvatar(avatar))
+                .data(userService.updateMyAvatar(cleaned))
                 .message("Avatar updated successfully")
                 .code(200)
                 .build();
@@ -290,8 +270,11 @@ public class UserController {
     )
     @PutMapping("/my-background")
     public FlowXResponse<UserResponse> updateMyBackground(@RequestBody String background) {
+        log.info("Updating background for user: {}", background);
+        String cleaned = background.substring(1, background.length() - 1);
+
         return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateMyBackground(background))
+                .data(userService.updateMyBackground(cleaned))
                 .message("Background updated successfully")
                 .code(200)
                 .build();
@@ -361,32 +344,6 @@ public class UserController {
         return FlowXResponse.<UserResponse>builder()
                 .data(userService.getUserById(id))
                 .message("User retrieved successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Update user avatar and background",
-            description = "Updates the avatar and/or background image of a user.",
-            parameters = {
-                    @Parameter(name = "id", description = "ID of the user to be updated")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Avatar/background updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "User not found"
-                    )
-            }
-    )
-    @PutMapping("/update-avatar/{id}")
-    public FlowXResponse<UserResponse> updateUserAvatarAndBackground(@PathVariable Long id, @RequestBody UserAvatarUpdateRequest request) {
-        return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateUserAvatarAndBackground(id, request))
-                .message("Avatar and background updated successfully")
                 .code(200)
                 .build();
     }

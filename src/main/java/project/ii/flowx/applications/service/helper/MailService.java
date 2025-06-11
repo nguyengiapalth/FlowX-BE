@@ -36,7 +36,6 @@ public class MailService {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
-
     @Async
     public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException, MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
@@ -93,12 +92,8 @@ public class MailService {
             );
 
             message.setText(emailContent);
-
             mailSender.send(message);
-            log.info("Password reset email sent successfully to: {}", toEmail);
-
         } catch (Exception e) {
-            log.error("Failed to send password reset email to: {}", toEmail, e);
             throw new RuntimeException("Failed to send email", e);
         }
     }

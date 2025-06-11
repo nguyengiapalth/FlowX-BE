@@ -9,8 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.model.entity.Role;
-import project.ii.flowx.exceptionhandler.FlowXError;
-import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.repository.RoleRepository;
 
 import java.util.List;
@@ -25,7 +23,6 @@ public class RoleService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public List<Role> getAllRoles() {
-        log.info("Fetching all roles from the database");
         return roleRepository.findAll();
     }
 }

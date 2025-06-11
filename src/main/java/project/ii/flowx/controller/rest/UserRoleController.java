@@ -23,7 +23,7 @@ import java.util.List;
 @Slf4j
 @CrossOrigin(origins = "*")
 @Tag(name = "User Role", description = "User Role API")
-//@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "bearerAuth")
 public class UserRoleController {
     UserRoleService userRoleService;
 

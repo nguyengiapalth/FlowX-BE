@@ -17,9 +17,11 @@ import project.ii.flowx.shared.enums.ContentTargetType;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ContentCreateRequest {
 
-
     @Schema(description = "Body or content details", example = "This is the main content of my post")
     String body;
+
+    @Schema(description = "Subtitle of the content", example = "This is a subtitle")
+    String subtitle;
 
     @Schema(description = "Parent content if this is a reply or nested content, can be -1 if no parent", example = "-1")
     long parentId;

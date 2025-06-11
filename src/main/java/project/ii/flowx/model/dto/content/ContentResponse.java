@@ -21,6 +21,9 @@ public class ContentResponse {
     Long id;
     String body;
     
+    @Schema(description = "Subtitle of the content")
+    String subtitle;
+    
     @Schema(description = "Author of the content")
     UserResponse author;
     

@@ -54,13 +54,11 @@ public class ContentReactionService {
             // Update existing reaction
             reaction = existingReaction.get();
             reaction.setReactionType(request.getReactionType());
-            log.info("Updated reaction for user {} on content {} to {}", userId, request.getContentId(), request.getReactionType());
         } else {
             // Create new reaction
             reaction = contentReactionMapper.toContentReaction(request);
             reaction.setContent(content);
             reaction.setUser(user);
-            log.info("Created new reaction for user {} on content {} with type {}", userId, request.getContentId(), request.getReactionType());
         }
 
         reaction = contentReactionRepository.save(reaction);
@@ -78,7 +76,6 @@ public class ContentReactionService {
         }
 
         contentReactionRepository.deleteByContentIdAndUserId(contentId, userId);
-        log.info("Removed reaction for user {} on content {}", userId, contentId);
     }
 
     @Transactional(readOnly = true)

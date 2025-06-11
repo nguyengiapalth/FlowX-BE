@@ -16,7 +16,4 @@ public class DepartmentUpdateRequest {
 
     @Schema(description = "Description of the department", example = "Department responsible for software development")
     String description;
-
-    @Schema(description = "Background image URL of the department", example = "https://example.com/dept-bg.jpg")
-    String background;
 }

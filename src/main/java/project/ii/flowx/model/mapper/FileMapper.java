@@ -37,12 +37,9 @@ public abstract class FileMapper {
         if (objectKey == null || objectKey.trim().isEmpty()) return null;
 
         try {
-            String url = minioService.getPresignedDownloadUrlFromObjectKey(objectKey, 3600 * 24); // 24 hours expiry
-            System.out.println("Converting objectKey: " + objectKey + " to URL: " + (url != null ? "SUCCESS" : "FAILED"));
-            return url;
+            // 24 hours expiry
+            return minioService.getPresignedDownloadUrlFromObjectKey(objectKey, 3600 * 24);
         } catch (Exception e) {
-            // Log error and return null
-            System.err.println("Error generating presigned URL for objectKey: " + objectKey + ", error: " + e.getMessage());
             return null;
         }
     }

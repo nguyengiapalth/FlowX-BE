@@ -32,7 +32,6 @@ import java.util.Map;
 @Tag(name = "File", description = "File management API")
 @SecurityRequirement(name = "bearerAuth")
 public class FileController {
-
     FileService fileService;
 
     @Operation(
@@ -86,37 +85,6 @@ public class FileController {
     }
 
     @Operation(
-            summary = "Get presigned URL for image upload",
-            description = "Generates a presigned URL for uploading an image directly to MinIO. Used for avatars and backgrounds.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Presigned URL generated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid request data"
-                    ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "User not authenticated"
-                    )
-            }
-    )
-    @PostMapping("/upload/image/presigned")
-    public FlowXResponse<PresignedResponse> getPresignedUrlForImage(@RequestParam("fileName") String fileName) {
-        log.info("Generate presigned upload URL for image: {}", fileName);
-        
-        PresignedResponse response = fileService.getPresignedUploadUrlForImage(fileName);
-        
-        return FlowXResponse.<PresignedResponse>builder()
-                .code(200)
-                .message("Presigned URL generated successfully")
-                .data(response)
-                .build();
-    }
-
-    @Operation(
             summary = "Delete file",
             description = "Deletes a file from storage and database.",
             responses = {
@@ -147,6 +115,50 @@ public class FileController {
     }
 
     @Operation(
+            summary = "Batch delete files",
+            description = "Deletes multiple files at once.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Files deleted successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid request data"
+                    )
+            }
+    )
+    @DeleteMapping("/file/batch")
+    public FlowXResponse<Map<String, Object>> batchDeleteFiles(@Valid @RequestBody BatchDeleteRequest request) {
+
+        log.info("Batch delete files request for {} files", request.getFileIds().size());
+
+        Map<String, Object> result = new HashMap<>();
+        int successCount = 0;
+        int failedCount = 0;
+
+        for (Long fileId : request.getFileIds()) {
+            try {
+                fileService.deleteFile(fileId);
+                successCount++;
+            } catch (Exception e) {
+                log.error("Failed to delete file ID: {}, error: {}", fileId, e.getMessage());
+                failedCount++;
+            }
+        }
+
+        result.put("successCount", successCount);
+        result.put("failedCount", failedCount);
+        result.put("totalRequested", request.getFileIds().size());
+
+        return FlowXResponse.<Map<String, Object>>builder()
+                .code(200)
+                .message(String.format("Batch delete completed: %d successful, %d failed", successCount, failedCount))
+                .data(result)
+                .build();
+    }
+
+    @Operation(
             summary = "Get file information",
             description = "Retrieves file metadata by ID.",
             responses = {
@@ -161,9 +173,7 @@ public class FileController {
             }
     )
     @GetMapping("/file/{fileId}")
-    public FlowXResponse<FileResponse> getFileInfo(
-            @PathVariable Long fileId)
-    {
+    public FlowXResponse<FileResponse> getFileInfo(@PathVariable Long fileId){
 
         log.info("Get file info request for file ID: {}", fileId);
         
@@ -176,30 +186,29 @@ public class FileController {
                 .build();
     }
 
-    @Operation(
-            summary = "Get files by entity",
-            description = "Retrieves all files associated with a specific entity.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Files retrieved successfully"
-                    )
-            }
-    )
-    @GetMapping("/file/entity/{entityType}/{entityId}")
-    public FlowXResponse<List<FileResponse>> getFilesByEntity(@PathVariable FileTargetType fileTargetType, @PathVariable Long targetId)
-    {
-
-        log.info("Get files by entity request - Type: {}, ID: {}", fileTargetType, targetId);
-        
-        List<FileResponse> files = fileService.getFilesByEntity(fileTargetType, targetId);
-        
-        return FlowXResponse.<List<FileResponse>>builder()
-                .code(200)
-                .message("Files retrieved successfully")
-                .data(files)
-                .build();
-    }
+//    @Operation(
+//            summary = "Get files by entity",
+//            description = "Retrieves all files associated with a specific entity.",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            description = "Files retrieved successfully"
+//                    )
+//            }
+//    )
+//    @GetMapping("/file/{fileTargetType}/{targetId}")
+//    public FlowXResponse<List<FileResponse>> getFilesByEntity(@PathVariable FileTargetType fileTargetType, @PathVariable Long targetId)
+//    {
+//        log.info("Get files by entity request - Type: {}, ID: {}", fileTargetType, targetId);
+//
+//        List<FileResponse> files = fileService.getFilesByEntity(fileTargetType, targetId);
+//
+//        return FlowXResponse.<List<FileResponse>>builder()
+//                .code(200)
+//                .message("Files retrieved successfully")
+//                .data(files)
+//                .build();
+//    }
 
     @Operation(
             summary = "Get my files",
@@ -222,48 +231,4 @@ public class FileController {
                 .build();
     }
 
-    @Operation(
-            summary = "Batch delete files",
-            description = "Deletes multiple files at once.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Files deleted successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid request data"
-                    )
-            }
-    )
-    @DeleteMapping("/file/batch")
-    public FlowXResponse<Map<String, Object>> batchDeleteFiles(
-            @Valid @RequestBody BatchDeleteRequest request) {
-
-        log.info("Batch delete files request for {} files", request.getFileIds().size());
-        
-        Map<String, Object> result = new HashMap<>();
-        int successCount = 0;
-        int failedCount = 0;
-        
-        for (Long fileId : request.getFileIds()) {
-            try {
-                fileService.deleteFile(fileId);
-                successCount++;
-            } catch (Exception e) {
-                log.error("Failed to delete file ID: {}, error: {}", fileId, e.getMessage());
-                failedCount++;
-            }
-        }
-        
-        result.put("successCount", successCount);
-        result.put("failedCount", failedCount);
-        result.put("totalRequested", request.getFileIds().size());
-        
-        return FlowXResponse.<Map<String, Object>>builder()
-                .code(200)
-                .message(String.format("Batch delete completed: %d successful, %d failed", successCount, failedCount))
-                .data(result)
-                .build();
-    }
 }

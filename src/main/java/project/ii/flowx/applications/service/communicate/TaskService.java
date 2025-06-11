@@ -36,13 +36,8 @@ public class TaskService {
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canCreateTask(#taskCreateRequest.targetId, #taskCreateRequest.targetType)")
     public TaskResponse createTask(TaskCreateRequest taskCreateRequest) {
-        log.info("Creating new task");
-        log.debug("Task create request: {}", taskCreateRequest);
-
-        // get user
         Long userId = getUserId();
         User user = entityLookupService.getUserById(userId);
-
 
         Task task = taskMapper.toTask(taskCreateRequest);
         task.setIsCompleted(false);
@@ -51,7 +46,6 @@ public class TaskService {
         task.setAssigner(user);
 
         task = taskRepository.save(task);
-        log.info("Successfully created task with ID: {}", task.getId());
 
         return taskMapper.toTaskResponse(task);
     }
@@ -59,49 +53,38 @@ public class TaskService {
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse updateTask(Long id, TaskUpdateRequest taskUpdateRequest) {
-        log.info("Updating task ID: {}", id);
-        log.debug("Task update request: {}", taskUpdateRequest);
-
         Task task = getTaskByIdInternal(id);
         taskMapper.updateTaskFromRequest(task, taskUpdateRequest);
         task = taskRepository.save(task);
 
-        log.info("Successfully updated task ID: {}", id);
         return taskMapper.toTaskResponse(task);
     }
 
     @Transactional
     @PreAuthorize("@authorize.isTaskAssignee(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse updateTaskStatus(Long id, TaskStatus status) {
-        log.info("Updating task status - ID: {}, New Status: {}", id, status);
 
         Task task = getTaskByIdInternal(id);
         TaskStatus oldStatus = task.getStatus();
         task.setStatus(status);
 
-        // Auto-complete task when status is DONE
         if (status == TaskStatus.COMPLETED) {
             task.setIsCompleted(true);
-            log.debug("Auto-marking task {} as completed due to DONE status", id);
         }
 
         task = taskRepository.save(task);
-        log.info("Successfully updated task status from {} to {} for task ID: {}", oldStatus, status, id);
-
         return taskMapper.toTaskResponse(task);
     }
 
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public TaskResponse markTaskCompleted(Long id) {
-        log.info("Marking task as completed - ID: {}", id);
 
         Task task = getTaskByIdInternal(id);
         task.setIsCompleted(true);
         task.setStatus(TaskStatus.COMPLETED);
 
         task = taskRepository.save(task);
-        log.info("Successfully marked task ID: {} as completed", id);
 
         return taskMapper.toTaskResponse(task);
     }
@@ -109,34 +92,24 @@ public class TaskService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public TaskResponse markTaskIncomplete(Long id) {
-        log.info("Marking task as incomplete - ID: {}", id);
-
         Task task = getTaskByIdInternal(id);
         task.setIsCompleted(false);
         if (task.getStatus() == TaskStatus.COMPLETED) task.setStatus(TaskStatus.IN_PROGRESS);
 
         task = taskRepository.save(task);
-        log.info("Successfully marked task ID: {} as incomplete", id);
-
         return taskMapper.toTaskResponse(task);
     }
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public void deleteTask(Long id) {
-        log.info("Deleting task ID: {}", id);
-
         Task task = getTaskByIdInternal(id);
         taskRepository.delete(task);
-
-        log.info("Successfully deleted task ID: {}", id);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssignee(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse getTaskById(Long id) {
-        log.debug("Fetching task by ID: {}", id);
-
         Task task = getTaskByIdInternal(id);
         return taskMapper.toTaskResponse(task);
     }
@@ -144,110 +117,67 @@ public class TaskService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public List<TaskResponse> getAllTasks() {
-        log.info("Fetching all tasks");
-
         List<Task> tasks = taskRepository.findAll();
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks", responses.size());
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasProjectRole('MANAGER', #projectId)")
     public List<TaskResponse> getTasksByProjectId(Long projectId) {
-        log.info("Fetching tasks by project ID: {}", projectId);
-
         List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, projectId);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks for project ID: {}", responses.size(), projectId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') || @authorize.hasDepartmentRole('MANAGER', #departmentId)")
     public List<TaskResponse> getTasksByDepartmentId(Long departmentId) {
-        log.info("Fetching tasks by department ID: {}", departmentId);
-
         List<Task> tasks = taskRepository.findByTargetTypeAndTargetId(ContentTargetType.PROJECT, departmentId);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks for department ID: {}", responses.size(), departmentId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public List<TaskResponse> getMyTaskCreated() {
         Long userId = getUserId();
-        log.info("Fetching tasks created by user: {}", userId);
-
         List<Task> tasks = taskRepository.findByAssignerId(userId);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks created by user: {}", responses.size(), userId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public List<TaskResponse> getMyTask() {
         Long userId = getUserId();
-        log.info("Fetching tasks assigned to user: {}", userId);
-
         List<Task> tasks = taskRepository.findByAssigneeId(userId);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks assigned to user: {}", responses.size(), userId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public List<TaskResponse> getMyTaskByProjectId(Long projectId) {
         Long userId = getUserId();
-        log.info("Fetching my tasks by project ID: {} for user: {}", projectId, userId);
-
         List<Task> tasks = taskRepository.findByAssigneeIdAndTargetTypeAndTargetId(userId, ContentTargetType.PROJECT, projectId);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} my tasks for project ID: {} by user: {}", responses.size(), projectId, userId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     public List<TaskResponse> getTasksByStatus(TaskStatus status) {
-        log.info("Fetching tasks by status: {}", status);
-
         List<Task> tasks = taskRepository.findByStatus(status);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} tasks with status: {}", responses.size(), status);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
     public List<TaskResponse> getMyTasksByStatus(TaskStatus status) {
         Long userId = getUserId();
-        log.info("Fetching my tasks by status: {} for user: {}", status, userId);
-
         List<Task> tasks = taskRepository.findByAssigneeIdAndStatus(userId, status);
-        List<TaskResponse> responses = taskMapper.toTaskResponseList(tasks);
-
-        log.info("Successfully fetched {} my tasks with status: {} for user: {}", responses.size(), status, userId);
-        return responses;
+        return taskMapper.toTaskResponseList(tasks);
     }
 
     // Helper methods
     private Task getTaskByIdInternal(Long id) {
         return taskRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Task not found with ID: {}", id);
-                    return new FlowXException(FlowXError.NOT_FOUND, "Task not found");
-                });
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Task not found"));
     }
 
     private Long getUserId() {
@@ -258,18 +188,10 @@ public class TaskService {
 
     // For schedule job
     public List<Task> getTasksDueToday() {
-        log.info("Fetching tasks due today");
         return taskRepository.findTasksDueToday();
     }
 
     public List<Task> getOverdueTasks() {
-        log.info("Fetching overdue tasks");
-        List<Task> overdueTasks = taskRepository.findOverdueTasks();
-        if (overdueTasks.isEmpty()) {
-            log.info("No overdue tasks found");
-        } else {
-            log.info("Found {} overdue tasks", overdueTasks.size());
-        }
-        return overdueTasks;
+        return taskRepository.findOverdueTasks();
     }
 }

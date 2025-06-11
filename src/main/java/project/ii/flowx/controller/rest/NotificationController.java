@@ -28,31 +28,6 @@ public class NotificationController {
     NotificationService notificationService;
 
     @Operation(
-            summary = "Create notification",
-            description = "Creates a new notification for the current user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "201",
-                            description = "Notification created successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid request data"
-                    )
-            }
-    )
-    @PostMapping
-    public FlowXResponse<NotificationResponse> createNotification(
-            @Valid @RequestBody NotificationCreateRequest createRequest) {
-        log.info("Creating new notification");
-        return FlowXResponse.<NotificationResponse>builder()
-                .data(notificationService.createNotification(createRequest))
-                .message("Notification created successfully")
-                .code(201)
-                .build();
-    }
-
-    @Operation(
             summary = "Get my notifications",
             description = "Retrieves a list of all notifications for the current user.",
             responses = {

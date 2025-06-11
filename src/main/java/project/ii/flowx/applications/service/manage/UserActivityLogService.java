@@ -34,14 +34,6 @@ public class UserActivityLogService {
         activityLog = userActivityLogRepository.save(activityLog);
         return userActivityLogMapper.toUserActivityLogResponse(activityLog);
     }
-    
-//    @Transactional
-//    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-//    public void deleteActivityLog(Long id) {
-//        userActivityLogRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("Activity log not found"));
-//        userActivityLogRepository.deleteById(id);
-//    }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
@@ -71,7 +63,6 @@ public class UserActivityLogService {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         Long userId = userPrincipal.getId();
 
-        log.info("Fetching activity logs for user ID: {}", userId);
 
         List<UserActivityLog> activityLogs = userActivityLogRepository.findByUserId(userId);
         return userActivityLogMapper.toUserActivityLogResponseList(activityLogs);

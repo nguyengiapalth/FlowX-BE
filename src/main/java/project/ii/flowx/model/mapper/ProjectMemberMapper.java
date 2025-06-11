@@ -23,7 +23,5 @@ public interface ProjectMemberMapper {
     @Mapping(target = "user.id", source = "userId")
     ProjectMember toProjectMember(ProjectMemberCreateRequest projectMemberCreateRequest);
 
-    void updateProjectMemberFromRequest(@MappingTarget ProjectMember projectMember, ProjectMemberUpdateRequest projectMemberUpdateRequest);
-
     List<ProjectMemberResponse> toProjectMemberResponseList(List<ProjectMember> projectMembers);
 }

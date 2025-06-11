@@ -54,14 +54,12 @@ public class FileService {
             file.setBucket(presignedUrl.getBucket());
             fileRepository.save(file);
 
-            log.info("Generated presigned upload URL for file: {}", createRequest);
             return PresignedUploadResponse.builder()
                     .url(presignedUrl.getUrl())
                     .presignedFileId(file.getId())
                     .objectKey(file.getObjectKey())
                     .build();
         } catch (Exception e) {
-            log.error("Error generating presigned upload URL: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to generate upload URL: " + e.getMessage());
         }
@@ -72,10 +70,8 @@ public class FileService {
         try {
             // Generate presigned URL for download
             String presignedUrl = minioService.getPresignedDownloadUrl(file, 3600);
-            log.info("Generated presigned download URL for file: {}", file.getName());
             return presignedUrl;
         } catch (Exception e) {
-            log.error("Error generating presigned download URL: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to generate download URL: " + e.getMessage());
         }
@@ -94,10 +90,8 @@ public class FileService {
             minioService.removeObject(file);
             fileRepository.delete(file);
 
-            log.info("File deleted successfully: {}", file.getName());
 
         } catch (Exception e) {
-            log.error("Error deleting file: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to delete file: " + e.getMessage());
         }
@@ -112,7 +106,6 @@ public class FileService {
     @Transactional(readOnly = true)
     public List<FileResponse> getFilesByEntity(FileTargetType fileTargetType, Long entityId) {
         List<File> files = fileRepository.findByTargetIdAndFileTargetType(entityId, fileTargetType);
-        log.info("Found {} files", files.size());
         return fileMapper.toFileResponseList(files);
     }
 
@@ -148,27 +141,6 @@ public class FileService {
         }
 
         return fileRepository.findByFileStatusAndCreatedAtBefore(fileStatus, cutoff);
-    }
-
-    /**
-     * Get presigned upload URL for image without creating File record
-     * Used for simple uploads like avatars/backgrounds
-     */
-    public PresignedResponse getPresignedUploadUrlForImage(String fileName) {
-        try {
-            // Validate authentication - temporarily commented for testing
-            // getCurrentUserId(); // This will throw if not authenticated
-            
-            PresignedResponse response = minioService.getPresignedUploadUrlSimple(fileName);
-            
-            log.info("Generated presigned upload URL for image: {}", fileName);
-            return response;
-            
-        } catch (Exception e) {
-            log.error("Error generating presigned upload URL for image: {}", e.getMessage());
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
-                    "Failed to generate presigned upload URL: " + e.getMessage());
-        }
     }
 
     // heper method

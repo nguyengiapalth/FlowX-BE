@@ -4,8 +4,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,7 +35,6 @@ public class UserRoleService {
     @Transactional(readOnly = true)
     public List<UserRoleResponse> getRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-        log.info("User roles for user with id {} : {}", userId, userRoles);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 
@@ -61,16 +58,13 @@ public class UserRoleService {
 //    @Cacheable(value = "userLocalRoles", key = "#userId")// , cacheManager = "caffeineCacheManager")
     public List<UserRoleResponse> getNonGlobalRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findLocalRoleByUserId(userId);
-        log.info("Non-global user roles for user with id {} : {}", userId, userRoles);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
-//    @Cacheable(value = "roleUsersByRoleId", key = "#roleId")
     public List<UserRoleResponse> getUsersForRole(Long roleId) {
         List<UserRole> userRoles = userRoleRepository.findByRoleId(roleId);
-        log.info("User roles for role with id {} : {}", roleId, userRoles);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
 
@@ -84,22 +78,19 @@ public class UserRoleService {
         Role role = entityLookupService.getRoleById(userRoleCreateRequest.getRoleId());
 
         if (userRoleCreateRequest.getScope() != RoleScope.GLOBAL) {
-            // Validate scopeId
             if (userRoleCreateRequest.getScopeId() == null || userRoleCreateRequest.getScopeId() <= 0)
                 throw new FlowXException(FlowXError.BAD_REQUEST, "Scope ID must be provided for non-global roles");
-
             // validate user has member userrole in the scope
             // if role = member, we don't need to check this
-            if (role.getName().equals("MEMBER"))
-                log.info("Assigning member role to user {}", user.getEmail());
-            else if (!userRoleRepository.existsByUserIdAndScopeAndScopeId(user.getId(), userRoleCreateRequest.getScope(), userRoleCreateRequest.getScopeId()))
-                throw new FlowXException(FlowXError.BAD_REQUEST, "User must have a member role in the specified scope");
+            if (!role.getName().equals("MEMBER")) {
+                if (!userRoleRepository.existsByUserIdAndScopeAndScopeId(user.getId(), userRoleCreateRequest.getScope(), userRoleCreateRequest.getScopeId()))
+                    throw new FlowXException(FlowXError.BAD_REQUEST, "User must have a member role in the specified scope");
+            }
         }
 
         UserRole userRole = userRoleMapper.toUserRole(userRoleCreateRequest);
         userRoleRepository.save(userRole);
 
-        log.info("Assigned role {} to user {}, cache evicted", role.getName(), user.getEmail());
     }
 
     @Transactional
@@ -110,7 +101,10 @@ public class UserRoleService {
 
         Long userId = userRole.getUser().getId();
         userRoleRepository.deleteById(id);
-        log.info("Deleted user role id {}, cache evicted for user {}", id, userId);
+    }
+
+    public void deleteUserRoleByUserIdAndRoleIdAndScope(Long userId, Long roleId, RoleScope roleScope, Long scopeId) {
+        userRoleRepository.deleteByUserIdAndRoleIdAndScopeAndScopeId(userId, roleId, roleScope, scopeId);
     }
 
     @Transactional
@@ -118,17 +112,12 @@ public class UserRoleService {
 //    @CacheEvict(value = {"userLocalRoles"}, key = "#userId")//, cacheManager = "caffeineCacheManager")
     public void deleteUserRolesByUserIdAndScope(Long userId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndScopeAndScopeId(userId, roleScope, scopeId);
-
-        // Evict cache after successful deletion
-        log.info("Deleted user roles for user {} with scope {} and scopeId {}, cache evicted",
-                userId, roleScope, scopeId);
     }
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     public void deleteUserRolesByScope(RoleScope roleScope, long scopeId) {
         userRoleRepository.deleteByScopeAndScopeId(roleScope, scopeId);
-        log.info("Deleted user roles with scope {} and scopeId {}, cache evicted", roleScope, scopeId);
     }
 
 }

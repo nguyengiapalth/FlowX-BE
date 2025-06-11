@@ -12,8 +12,7 @@ import java.util.List;
 @Repository
 public interface FileRepository extends JpaRepository<File, Long> {
     List<File> findByUploaderId(Long uploaderId);
-    List<File> findByTargetId(Long entityId);
-    List<File> findByFileTargetType(FileTargetType fileTargetType);
+
     List<File> findByTargetIdAndFileTargetType(Long entityId, FileTargetType fileTargetType);
 
     List<File> findByFileStatus(FileStatus status);

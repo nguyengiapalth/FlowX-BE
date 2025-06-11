@@ -10,13 +10,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.dto.file.PresignedResponse;
 import project.ii.flowx.model.entity.File;
 
-import java.io.InputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
@@ -35,10 +33,7 @@ public class MinioService {
     @Transactional(readOnly = true)
     public PresignedResponse getPresignedUploadUrl(String fileName) {
         try {
-            // Ensure bucket exists
             ensureBucketExists();
-
-            // Generate unique object key
             String objectKey = generateObjectName(fileName);
 
             // Generate presigned URL for upload
@@ -53,7 +48,6 @@ public class MinioService {
                             .build()
             );
 
-            log.info("Generated presigned upload URL for file: {}", fileName);
             return PresignedResponse.builder()
                     .url(presignedUrl)
                     .bucket(bucketName)
@@ -61,17 +55,15 @@ public class MinioService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Error generating presigned upload URL: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to generate upload URL: " + e.getMessage());
         }
     }
 
     @Transactional(readOnly = true)
-    public String getPresignedDownloadUrl(File file, int presignedExpiryTime) {
+    public String getPresignedDownloadUrl(File file, int presignedExpiryTime){
         try {
-            // Generate presigned URL for download
-            String presignedUrl = minioClient.getPresignedObjectUrl(
+            return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(file.getBucket())
@@ -79,13 +71,7 @@ public class MinioService {
                             .expiry(Math.max(presignedExpiry, presignedExpiryTime), TimeUnit.SECONDS)
                             .build()
             );
-            log.info("Generated presigned download URL for file: {}", file.getName());
-
-
-            return presignedUrl;
-
         } catch (Exception e) {
-            log.error("Error generating presigned download URL: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Failed to generate download URL: " + e.getMessage());
         }
     }
@@ -98,9 +84,7 @@ public class MinioService {
                             .object(file.getObjectKey())
                             .build()
             );
-            log.info("Removed file from MinIO: {}", file.getName());
         } catch (Exception e) {
-            log.error("Error removing file from MinIO: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Failed to remove file: " + e.getMessage());
         }
     }
@@ -116,14 +100,12 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            log.error("Error getting object info: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to get object info: " + e.getMessage());
         }
     }
 
     public boolean objectExists(String objectPath) {
-        log.info("Checking if object exists in MinIO: {}", objectPath);
         try {
             StatObjectResponse stat = minioClient.statObject(
                     StatObjectArgs.builder()
@@ -136,121 +118,11 @@ public class MinioService {
             if (e.errorResponse().code().equals("NoSuchKey")) {
                 return false;
             }
-            log.error("Error checking object existence: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to check object existence: " + e.getMessage());
         } catch (Exception e) {
-            log.error("Error checking object existence: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to check object existence: " + e.getMessage());
-        }
-    }
-
-
-
-    /**
-     * Generate presigned upload URL for simple uploads (images only)
-     * Does not create File record - used for avatars/backgrounds
-     */
-    public PresignedResponse getPresignedUploadUrlSimple(String fileName) {
-        try {
-            // Ensure bucket exists
-            ensureBucketExists();
-
-            // Generate unique object key
-            String objectKey = generateObjectName(fileName);
-
-            // Generate presigned URL for upload
-            String presignedUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.PUT)
-                            .bucket(bucketName)
-                            .object(objectKey)
-                            .expiry(presignedExpiry, TimeUnit.SECONDS)
-                            .build()
-            );
-
-            log.info("Generated simple presigned upload URL for file: {}", fileName);
-            return PresignedResponse.builder()
-                    .url(presignedUrl)
-                    .bucket(bucketName)
-                    .objectKey(objectKey)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error generating simple presigned upload URL: {}", e.getMessage());
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
-                    "Failed to generate upload URL: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Generate presigned upload URL for cropped avatar (optimized for avatars)
-     */
-    public PresignedResponse getPresignedUploadUrlForAvatar(String fileName) {
-        try {
-            // Ensure bucket exists
-            ensureBucketExists();
-
-            // Generate unique object key specifically for avatars
-            String objectKey = generateAvatarObjectName(fileName);
-
-            // Generate presigned URL for upload
-            String presignedUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.PUT)
-                            .bucket(bucketName)
-                            .object(objectKey)
-                            .expiry(presignedExpiry, TimeUnit.SECONDS)
-                            .build()
-            );
-
-            log.info("Generated presigned upload URL for avatar: {}", fileName);
-            return PresignedResponse.builder()
-                    .url(presignedUrl)
-                    .bucket(bucketName)
-                    .objectKey(objectKey)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error generating presigned upload URL for avatar: {}", e.getMessage());
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
-                    "Failed to generate avatar upload URL: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Generate presigned upload URL for cropped background (optimized for backgrounds)
-     */
-    public PresignedResponse getPresignedUploadUrlForBackground(String fileName) {
-        try {
-            // Ensure bucket exists
-            ensureBucketExists();
-
-            // Generate unique object key specifically for backgrounds
-            String objectKey = generateBackgroundObjectName(fileName);
-
-            // Generate presigned URL for upload
-            String presignedUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.PUT)
-                            .bucket(bucketName)
-                            .object(objectKey)
-                            .expiry(presignedExpiry, TimeUnit.SECONDS)
-                            .build()
-            );
-
-            log.info("Generated presigned upload URL for background: {}", fileName);
-            return PresignedResponse.builder()
-                    .url(presignedUrl)
-                    .bucket(bucketName)
-                    .objectKey(objectKey)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error generating presigned upload URL for background: {}", e.getMessage());
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
-                    "Failed to generate background upload URL: " + e.getMessage());
         }
     }
 
@@ -267,10 +139,8 @@ public class MinioService {
                                 .bucket(bucketName)
                                 .build()
                 );
-                log.info("Created bucket: {}", bucketName);
             }
         } catch (Exception e) {
-            log.error("Error ensuring bucket exists: {}", e.getMessage());
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Failed to ensure bucket exists");
         }
     }
@@ -287,36 +157,13 @@ public class MinioService {
         return uuid + "_" + timestamp + extension;
     }
 
-    /**
-     * Generate object name with specific prefix for avatars
-     */
-    private String generateAvatarObjectName(String originalFileName) {
-        String uuid = java.util.UUID.randomUUID().toString();
-        String timestamp = String.valueOf(LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.UTC) * 1000);
-        return "avatars/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped avatars
-    }
-
-    /**
-     * Generate object name with specific prefix for backgrounds
-     */
-    private String generateBackgroundObjectName(String originalFileName) {
-        String uuid = java.util.UUID.randomUUID().toString();
-        String timestamp = String.valueOf(LocalDateTime.now().toEpochSecond(java.time.ZoneOffset.UTC) * 1000);
-        return "backgrounds/" + uuid + "_" + timestamp + ".png"; // Always PNG for cropped backgrounds
-    }
-
-
-    /**
-     * Generate presigned download URL from objectKey (for avatar/background display)
-     */
     public String getPresignedDownloadUrlFromObjectKey(String objectKey, int presignedExpiryTime) {
         if (objectKey == null || objectKey.trim().isEmpty()) {
             return null;
         }
         
         try {
-            // Generate presigned URL for download
-            String presignedUrl = minioClient.getPresignedObjectUrl(
+            return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucketName)
@@ -324,11 +171,8 @@ public class MinioService {
                             .expiry(Math.max(presignedExpiry, presignedExpiryTime), TimeUnit.SECONDS)
                             .build()
             );
-            log.debug("Generated presigned download URL for objectKey: {}", objectKey);
-            return presignedUrl;
 
         } catch (Exception e) {
-            log.error("Error generating presigned download URL for objectKey {}: {}", objectKey, e.getMessage());
             return null;
         }
     }
@@ -349,7 +193,6 @@ public class MinioService {
 
             return hexString.toString();
         } catch (Exception e) {
-            log.warn("Error calculating file hash: {}", e.getMessage());
             return null;
         }
     }

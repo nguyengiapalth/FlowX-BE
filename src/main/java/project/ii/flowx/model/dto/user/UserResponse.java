@@ -38,4 +38,5 @@ public class UserResponse {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     UserStatus status;
+    String gender;
 }

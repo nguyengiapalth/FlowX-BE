@@ -16,7 +16,11 @@ import java.util.Objects;
 @Setter
 @ToString
 @Entity
-@Table(name = "users") 
+@Table(name = "users", indexes = {
+    @jakarta.persistence.Index(name = "idx_user_email", columnList = "email"),
+    @jakarta.persistence.Index(name = "idx_user_department_id", columnList = "department_id"),
+    @jakarta.persistence.Index(name = "idx_user_status", columnList = "status")
+}) 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
@@ -65,10 +69,14 @@ public class User {
     @Column(name = "twitter", length = 255)
     String twitter;
 
+    @Column(name = "gender", length = 10)
+    @Enumerated(EnumType.STRING)
+    String gender;
+
     @Column(name = "join_date")
     LocalDate joinDate;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "department_id")
     @ToString.Exclude

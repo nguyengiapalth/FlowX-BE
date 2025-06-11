@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 import project.ii.flowx.shared.enums.MemberStatus;
+import project.ii.flowx.shared.enums.RoleDefault;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,7 +22,15 @@ import java.util.Objects;
 @AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Entity
-@Table(name = "project_members")
+@Table(name = "project_members",
+       uniqueConstraints = {
+           @UniqueConstraint(name = "uk_project_member", columnNames = {"project_id", "user_id"})
+       },
+       indexes = {
+           @jakarta.persistence.Index(name = "idx_project_member_project_id", columnList = "project_id"),
+           @jakarta.persistence.Index(name = "idx_project_member_user_id", columnList = "user_id"),
+           @jakarta.persistence.Index(name = "idx_project_member_status", columnList = "status")
+       })
 public class ProjectMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,8 +47,9 @@ public class ProjectMember {
     @ToString.Exclude
     User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 50)
-    String role;
+    RoleDefault role; // member or manager
 
     @CreationTimestamp
     @Column(name = "join_date")

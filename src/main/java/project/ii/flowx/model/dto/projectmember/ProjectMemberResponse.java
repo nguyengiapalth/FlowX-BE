@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.shared.enums.MemberStatus;
+import project.ii.flowx.shared.enums.RoleDefault;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,7 +22,7 @@ public class ProjectMemberResponse {
     Long id;
     ProjectResponse project;
     UserResponse user;
-    String role;
+    RoleDefault role;
     LocalDate joinDate;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

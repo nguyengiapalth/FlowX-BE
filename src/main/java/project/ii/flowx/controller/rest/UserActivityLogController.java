@@ -48,7 +48,6 @@ public class UserActivityLogController {
                 .build();
     }
 
-
     @GetMapping("/{userId}")
     public FlowXResponse<List<UserActivityLogResponse>> getAllActivityLogsForUserId(@PathVariable Long userId) {
         return FlowXResponse.<List<UserActivityLogResponse>>builder()

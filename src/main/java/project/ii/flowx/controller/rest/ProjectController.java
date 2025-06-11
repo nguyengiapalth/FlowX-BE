@@ -15,7 +15,6 @@ import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.project.ProjectCreateRequest;
 import project.ii.flowx.model.dto.project.ProjectResponse;
 import project.ii.flowx.model.dto.project.ProjectUpdateRequest;
-import project.ii.flowx.model.dto.project.ProjectBackgroundUpdateRequest;
 import project.ii.flowx.shared.enums.ProjectStatus;
 
 import java.util.List;
@@ -236,6 +235,26 @@ public class ProjectController {
     }
 
     @Operation(
+            summary = "Get my projects",
+            description = "Retrieves a list of all projects assigned to the current user.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "List of my projects retrieved successfully"
+                    )
+            }
+    )
+    @GetMapping("/my-projects")
+    public FlowXResponse<List<ProjectResponse>> getMyProjects() {
+        log.info("Fetching projects assigned to the current user");
+        return FlowXResponse.<List<ProjectResponse>>builder()
+                .data(projectService.getMyProjects())
+                .message("List of my projects retrieved successfully")
+                .code(200)
+                .build();
+    }
+
+    @Operation(
             summary = "Update project background",
             description = "Updates the background image of a project.",
             parameters = {
@@ -253,12 +272,10 @@ public class ProjectController {
             }
     )
     @PutMapping("/update-background/{id}")
-    public FlowXResponse<ProjectResponse> updateProjectBackground(
-            @PathVariable Long id,
-            @RequestBody ProjectBackgroundUpdateRequest request) {
+    public FlowXResponse<ProjectResponse> updateProjectBackground(@PathVariable Long id, @RequestBody String background) {
 
         return FlowXResponse.<ProjectResponse>builder()
-                .data(projectService.updateProjectBackground(id, request))
+                .data(projectService.updateProjectBackground(id, background))
                 .message("Project background updated successfully")
                 .code(200)
                 .build();

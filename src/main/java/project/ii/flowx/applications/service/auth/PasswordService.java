@@ -37,7 +37,6 @@ public class PasswordService {
     @Transactional
     public void sendPasswordResetEmail(ForgotPasswordRequest request) {
         String email = request.getEmail();
-        log.info("Processing password reset request for email: {}", email);
         
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found with email: " + email));
@@ -58,9 +57,7 @@ public class PasswordService {
         // Gửi email
         try {
             mailService.sendPasswordResetEmail(user.getEmail(), token, user.getFullName());
-            log.info("Password reset email sent successfully to: {}", email);
         } catch (Exception e) {
-            log.error("Failed to send password reset email", e);
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Failed to send password reset email");
         }
     }
@@ -69,8 +66,6 @@ public class PasswordService {
     public void resetPassword(ResetPasswordRequest request) {
         String token = request.getToken();
         String newPassword = request.getNewPassword();
-        
-        log.info("Processing password reset with token: {}", token);
         
         PasswordResetToken resetToken = passwordResetTokenRepository.findValidToken(token, LocalDateTime.now())
                 .orElseThrow(() -> new FlowXException(FlowXError.INVALID_TOKEN, "Invalid or expired reset token"));
@@ -91,8 +86,6 @@ public class PasswordService {
         // Mark token as used
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
-        
-        log.info("Password reset successfully for user: {}", user.getEmail());
     }
 
     @Transactional
@@ -106,9 +99,6 @@ public class PasswordService {
         User user = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
 
-        log.info("old password: {}", changePasswordRequest.getOldPassword());
-        log.info("is matches: {}", passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()));
-
         if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()))
             throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
 
@@ -120,6 +110,5 @@ public class PasswordService {
     @Transactional
     public void cleanupExpiredTokens() {
         passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());
-        log.info("Expired password reset tokens cleaned up");
     }
 } 
