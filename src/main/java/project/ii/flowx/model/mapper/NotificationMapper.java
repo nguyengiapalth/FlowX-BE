@@ -5,7 +5,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.dto.notification.NotificationResponse;
-import project.ii.flowx.model.dto.notification.NotificationUpdateRequest;
 import project.ii.flowx.model.entity.Notification;
 
 import java.util.List;
@@ -21,8 +20,6 @@ public interface NotificationMapper {
 
     @Mapping(target = "user.id", source = "userId")
     Notification toNotification(NotificationCreateRequest notificationCreateRequest);
-
-    void updateNotificationFromRequest(@MappingTarget Notification notification, NotificationUpdateRequest notificationUpdateRequest);
 
     List<NotificationResponse> toNotificationResponseList(List<Notification> notifications);
 }

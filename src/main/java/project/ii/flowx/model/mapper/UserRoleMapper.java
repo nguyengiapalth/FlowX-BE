@@ -2,11 +2,9 @@ package project.ii.flowx.model.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import project.ii.flowx.model.entity.UserRole;
 import project.ii.flowx.model.dto.userrole.UserRoleCreateRequest;
 import project.ii.flowx.model.dto.userrole.UserRoleResponse;
-import project.ii.flowx.model.dto.userrole.UserRoleUpdateRequest;
 
 import java.util.List;
 

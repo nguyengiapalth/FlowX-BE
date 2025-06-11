@@ -16,7 +16,6 @@ import project.ii.flowx.model.entity.Department;
 import project.ii.flowx.model.dto.user.UserCreateRequest;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.dto.user.UserUpdateRequest;
-import project.ii.flowx.model.dto.user.UserAvatarUpdateRequest;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;

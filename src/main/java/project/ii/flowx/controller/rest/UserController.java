@@ -15,7 +15,6 @@ import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.user.UserCreateRequest;
 import project.ii.flowx.model.dto.user.UserResponse;
 import project.ii.flowx.model.dto.user.UserUpdateRequest;
-import project.ii.flowx.model.dto.user.UserAvatarUpdateRequest;
 import project.ii.flowx.applications.service.manage.UserService;
 import project.ii.flowx.shared.enums.UserStatus;
 
