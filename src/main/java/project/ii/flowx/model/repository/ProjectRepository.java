@@ -15,7 +15,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByStatus(ProjectStatus status);
 
-    @EntityGraph(attributePaths = {"members"})
-    @Query("SELECT p FROM Project p JOIN p.members m WHERE m.id = ?1")
+    @Query("SELECT DISTINCT p FROM Project p JOIN FETCH p.members m WHERE m.id = ?1")
     List<Project> findByMemberId(Long userId);
 }

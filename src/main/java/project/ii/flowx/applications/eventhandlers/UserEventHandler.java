@@ -61,8 +61,7 @@ public class UserEventHandler {
                 .content("Hello " + event.fullName() + ",\n\nWelcome to FlowX! We are glad to have you on board.\n\nBest regards,\nFlowX Team")
                 .build();
 
-        NotificationResponse notification = notificationService.createNotification(notificationCreateRequest);
-        log.info("Welcome notification created: {}", notification);
+        notificationService.createNotification(notificationCreateRequest);
 
         // Send welcome email
         mailService.sendWelcomeEmail(event);
@@ -104,7 +103,6 @@ public class UserEventHandler {
                 .title("Department Changed")
                 .content("Your department has been changed to " + event.departmentId() + ".")
                 .build();
-        NotificationResponse notification = notificationService.createNotification(notificationCreateRequest);
-        log.info("Department change notification created: {}", notification);
+        notificationService.createNotification(notificationCreateRequest);
     }
 }

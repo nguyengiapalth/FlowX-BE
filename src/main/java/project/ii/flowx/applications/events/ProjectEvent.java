@@ -10,7 +10,7 @@ public class ProjectEvent {
 
     public record ProjectDeletedEvent(long projectId) {}
 
-    public record AddMemberEvent(long projectId, long userId) {}
+    public record AddMemberEvent(long projectId, long userId, RoleDefault role) {}
 
     public record RemoveMemberEvent(long projectId, long userId) {}
 

@@ -40,7 +40,7 @@ public class NotificationService {
      EntityLookupService entityLookupService;
 
     @Transactional()
-    public NotificationResponse createNotification(NotificationCreateRequest createRequest) {
+    public void createNotification(NotificationCreateRequest createRequest) {
         // Create notification entity
         Notification notification = new Notification();
         notification.setTitle(createRequest.getTitle());
@@ -63,11 +63,10 @@ public class NotificationService {
         try {
             messagingTemplate.convertAndSend(topic, response);
             log.info("Notification sent to WebSocket topic: {}", topic);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Failed to send notification to WebSocket: {}", e.getMessage(), e);
         }
-
-        return response;
     }
 
     @Transactional()

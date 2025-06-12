@@ -193,7 +193,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR') or @authorize.hasDepartmentRole('MEMBER', #departmentId)") // or my department
+    @PreAuthorize("isAuthenticated()") // or my department
     public List<UserResponse> getUsersByDepartment(Long departmentId) {
         List<User> users = userRepository.findByDepartmentId(departmentId);
         return users.isEmpty() ? null : userMapper.toUserResponseList(users);

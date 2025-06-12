@@ -36,8 +36,7 @@ public class DepartmentService {
     @Transactional
     public DepartmentResponse createDepartment(DepartmentCreateRequest departmentCreateRequest) {
         Department department = departmentMapper.toDepartment(departmentCreateRequest);
-        DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
-        return response;
+        return departmentMapper.toDepartmentResponse(departmentRepository.save(department));
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
@@ -64,7 +63,7 @@ public class DepartmentService {
         return response;
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     @Transactional
     public DepartmentResponse updateManager(Long id, Long newManagerId) {
         log.info("updateManager called with departmentId={}, newManagerId={}", id, newManagerId);

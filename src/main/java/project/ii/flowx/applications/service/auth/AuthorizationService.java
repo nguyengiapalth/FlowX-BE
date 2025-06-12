@@ -36,11 +36,18 @@ public class AuthorizationService {
         Long userId = getUserId();
         List<UserRoleResponse> userRoles = getUserRoles(userId);
 
-        boolean has = userRoles.stream()
+        return userRoles.stream()
                 .anyMatch(r -> r.getRole().getName().equals(roleName)
                         && r.getScope() == roleScope
                         && r.getScopeId().equals(scopeId));
-        return has;
+    }
+
+    public boolean isGlobalManager() {
+        Long userId = getUserId();
+        List<UserRoleResponse> userRoles = getUserRoles(userId);
+        return userRoles.stream()
+                .anyMatch(r -> r.getRole().getName().equalsIgnoreCase("MANAGER")
+                        && r.getScope() == RoleScope.GLOBAL);
     }
 
     public boolean hasProjectRole(String roleName, Long projectId) {
@@ -118,6 +125,25 @@ public class AuthorizationService {
         return false; // No access for other types
     }
 
+    public boolean canAccessTask(Long taskId) {
+        if(isGlobalManager()) return true; // Global managers can access any task
+        Long userId = getUserId();
+        Task task = entityLookupService.getTaskById(taskId);
+        if (task == null) throw new FlowXException(FlowXError.NOT_FOUND, "Task not found with ID: " + taskId);
+
+        // Check if the user is the assignee or assigner
+        if (task.getAssignee() != null && task.getAssignee().getId().equals(userId)) return true;
+        if (task.getAssigner() != null && task.getAssigner().getId().equals(userId)) return true;
+
+        // Check if the user has a manager role in the target department or project
+        if (task.getTargetType() == ContentTargetType.DEPARTMENT)
+            return hasDepartmentRole("MANAGER", task.getTargetId());
+        if (task.getTargetType() == ContentTargetType.PROJECT)
+            return hasProjectRole("MANAGER", task.getTargetId());
+
+        return false; // No access if not assignee, assigner, or manager
+    }
+
     public boolean isContentAuthor(Long contentId) {
         Long userId = getUserId();
         var content = entityLookupService.getContentById(contentId);
@@ -144,6 +170,9 @@ public class AuthorizationService {
 
         // Check if the user is the author
         if (content.getAuthor().getId().equals(userId)) return true;
+        if (content.getContentTargetType() == ContentTargetType.PRIVATE) return false; // Only the author can access private content
+        if (isGlobalManager()) return true;
+
         // Check if the user has a manager role in the target department or project
         if (content.getContentTargetType() == ContentTargetType.GLOBAL) return true;
         if (content.getContentTargetType() == ContentTargetType.DEPARTMENT)
@@ -154,7 +183,7 @@ public class AuthorizationService {
         return false; // No access if not author or manager
     }
 
-    public Long getUserId() {
+    private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
             throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");

@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
 import project.ii.flowx.model.entity.Department;
 import project.ii.flowx.model.entity.Project;
@@ -35,9 +36,10 @@ import java.util.ArrayList;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProjectService {
     ProjectRepository projectRepository;
-    ProjectMemberRepository projectMemberRepository;
+    AuthorizationService authorizationService;
     ProjectMapper projectMapper;
     EntityLookupService entityLookupService;
+
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
@@ -126,7 +128,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MEMBER', #id)")
+    @PreAuthorize("isAuthenticated()")
     public ProjectResponse getProjectById(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
@@ -134,10 +136,13 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("isAuthenticated()")
     public List<ProjectResponse> getAllProjects() {
         List<Project> projects = projectRepository.findAll();
-        return projectMapper.toProjectResponseList(projects);
+        // Filter projects based on user's access rights
+        List<ProjectResponse> projectResponses = projectMapper.toProjectResponseList(projects);
+
+        return filterAccessibleProjects(projectResponses);
     }
 
     @Transactional(readOnly = true)
@@ -160,9 +165,12 @@ public class ProjectService {
         Long userId = getUserId();
         List<Project> projects = projectRepository.findByMemberId(userId);
         if (projects.isEmpty()) {return List.of();}
+        log.info("Found {} projects for user {}", projects, userId);
         return projectMapper.toProjectResponseList(projects);
     }
 
+
+    // helper method to get the authenticated user's ID
     private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
@@ -170,5 +178,11 @@ public class ProjectService {
 
         UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
         return userPrincipal.getId();
+    }
+
+    private List<ProjectResponse> filterAccessibleProjects(List<ProjectResponse> projects) {
+        return projects.stream()
+                .filter(project -> authorizationService.hasProjectRole("MEMBER", project.getId()))
+                .toList();
     }
 }

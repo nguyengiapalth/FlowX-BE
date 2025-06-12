@@ -84,7 +84,7 @@ public class ContentService {
     }
 
     @Transactional
-    @PreAuthorize("@authorize.canAccessContent(#contentId)")
+    @PreAuthorize("@authorize.isContentAuthor(#contentId)")
     public void updateHasFileFlag(Long contentId) {
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
@@ -109,7 +109,7 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize( "hasAnyAuthority('ROLE_MANAGER', 'ROLE_USER')")
+    @PreAuthorize( "isAuthenticated()")
     public List<ContentResponse> getAllContents() {
         List<Content> contents = contentRepository.findAll();
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
@@ -129,6 +129,7 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
     public List<ContentResponse> getContentsByUser(Long userId) {
         User user = entityLookupService.getUserById(userId);
         List<Content> contents = contentRepository.findByAuthorOrderByCreatedAtDesc(user);
@@ -155,6 +156,7 @@ public class ContentService {
         return populateFiles(response);
     }
 
+    // Helper method to get the current authenticated user's ID
     private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)

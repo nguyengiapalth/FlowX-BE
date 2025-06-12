@@ -65,7 +65,18 @@ public class ProjectEventHandler {
                 .build();
 
         userRoleService.assignRoleToUser(userRoleCreateRequest);
+        if (event.role().equals(RoleDefault.MANAGER)) {
+            Role managerRole = entityLookupService.getRoleByName("MANAGER")
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Manager role not found"));
 
+            UserRoleCreateRequest managerRoleRequest = UserRoleCreateRequest.builder()
+                    .userId(event.userId())
+                    .roleId(managerRole.getId())
+                    .scope(RoleScope.PROJECT)
+                    .scopeId(event.projectId())
+                    .build();
+            userRoleService.assignRoleToUser(managerRoleRequest);
+        }
         // send socket event to user
     }
 
@@ -90,8 +101,7 @@ public class ProjectEventHandler {
         }
         else {
             // delete Manager role if exists
-//            userRoleService.deleteUserRolesByUserIdAndScope(event.userId(), RoleScope.PROJECT, event.projectId());
-            return;
+            userRoleService.deleteUserRolesByUserIdAndScope(event.userId(), RoleScope.PROJECT, event.projectId());
         }
     }
 }
