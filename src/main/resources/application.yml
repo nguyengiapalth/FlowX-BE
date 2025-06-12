@@ -1,0 +1,116 @@
+# Server configuration
+server:
+  port: 3001
+
+  compression:
+    enabled: true
+  tomcat:
+#    max-threads: 200
+    max-connections: 10000
+
+# Spring configuration
+spring:
+  # Application name
+  application:
+    name: FlowX
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
+
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flow_x
+    username: ......
+    password: .......
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+
+  # JPA/Hibernate configuration
+  jpa:
+    hibernate:
+      ddl-auto: update  # none, validate, update, create, create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  # Security
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:{........}.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET:......}
+            scope:
+              - openid
+              - profile
+              - email
+            authorization-grant-type: authorization_code
+
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+  # JWT Configuration
+  jwt:
+    secret: ........
+    expiration: 36000000 # 10 hours in milliseconds
+    refresh-expiration: 604800000  # 7 days in milliseconds
+
+  data:
+    # Redis configuration
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+    cache:
+      redis:
+        time-to-live: 3600s  # 1 hour
+        key-prefix: flowx
+
+      caffeine:
+        #Caffeine cache configuration
+        spec: maximumSize=1000,expireAfterAccess=1h
+
+ # jackson configuration
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: .....@gmail.com
+    password: ......
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: ......
+  secret-key: .......
+  bucket-name: flowx-bucket
+  region: asia-east1
+  useSSL: false
+  presigned:
+    expiry: 36000
