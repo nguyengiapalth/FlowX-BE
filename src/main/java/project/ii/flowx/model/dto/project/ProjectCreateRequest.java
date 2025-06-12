@@ -44,7 +44,4 @@ public class ProjectCreateRequest {
 
     @Schema(description = "Priority level of the project", example = "HIGH")
     PriorityLevel priority;
-
-    @Schema(description = "List of user IDs to be added as members to the project")
-    List<Long> memberIds; // List of user IDs to be added as members to the project
 }

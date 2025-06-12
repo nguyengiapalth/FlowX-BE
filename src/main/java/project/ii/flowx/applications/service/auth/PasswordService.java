@@ -2,6 +2,7 @@ package project.ii.flowx.applications.service.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -89,21 +90,16 @@ public class PasswordService {
     }
 
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public void changePassword(ChangePasswordRequest changePasswordRequest) {
-        var context = SecurityContextHolder.getContext();
-        if (context == null || context.getAuthentication() == null) {
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "Unauthorized");
-        }
-        Authentication authentication = context.getAuthentication();
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(userPrincipal.getId())
+        Long userId = getUserId();
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
 
         if(!passwordEncoder.matches(changePasswordRequest.getOldPassword(), user.getPassword()))
-            throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
+            throw new FlowXException(FlowXError.ACCESS_DENIED, "Invalid password");
 
         user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
-
         userRepository.save(user);
     }
 
@@ -111,4 +107,13 @@ public class PasswordService {
     public void cleanupExpiredTokens() {
         passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());
     }
+
+    private Long getUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
+            throw new FlowXException(FlowXError.ACCESS_DENIED, "Unauthorized");
+        }
+        return userPrincipal.getId();
+    }
+
 } 

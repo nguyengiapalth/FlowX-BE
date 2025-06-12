@@ -100,7 +100,6 @@ public class AuthorizationService {
     }
 
     public boolean isTaskManager(Long taskId) {
-        Long userId = getUserId();
         Task task = entityLookupService.getTaskById(taskId);
         if (task == null) throw new FlowXException(FlowXError.NOT_FOUND, "Task not found with ID: " + taskId);
         if (task.getTargetType() == ContentTargetType.DEPARTMENT)

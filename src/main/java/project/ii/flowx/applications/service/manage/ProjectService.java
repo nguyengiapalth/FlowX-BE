@@ -59,49 +59,7 @@ public class ProjectService {
         }
 
         project = projectRepository.save(project);
-        
-        // Add members to the project if memberIds is provided
-        if (projectCreateRequest.getMemberIds() != null && !projectCreateRequest.getMemberIds().isEmpty()) {
-            log.info("Adding {} members to project {}", projectCreateRequest.getMemberIds().size(), project.getId());
-            addMembersToProject(project.getId(), projectCreateRequest.getMemberIds());
-        }
-        
         return projectMapper.toProjectResponse(project);
-    }
-
-    // Helper method to add members to project
-    @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
-            "or @authorize.hasProjectRole('MANAGER', #projectId)")
-    protected void addMembersToProject(Long projectId, List<Long> memberIds) {
-        List<ProjectMember> membersToAdd = new ArrayList<>();
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
-        
-        for (Long userId : memberIds) {
-            // Validate user exists and get user entity
-            var user = entityLookupService.getUserById(userId);
-            
-            // Check if user is already a member of this project
-            boolean memberExists = projectMemberRepository.existsByProjectIdAndUserId(projectId, userId);
-            if (!memberExists) {
-                ProjectMember projectMember = ProjectMember.builder()
-                    .project(project)
-                    .user(user)
-                    .role(RoleDefault.MEMBER) // Default role
-                    .status(MemberStatus.ACTIVE)
-                    .joinDate(LocalDate.now())
-                    .build();
-                membersToAdd.add(projectMember);
-            } else {
-                log.warn("User {} is already a member of project {}", userId, projectId);
-            }
-        }
-        
-        if (!membersToAdd.isEmpty()) {
-            projectMemberRepository.saveAll(membersToAdd);
-            log.info("Successfully added {} members to project {}", membersToAdd.size(), projectId);
-        }
     }
 
     @Transactional

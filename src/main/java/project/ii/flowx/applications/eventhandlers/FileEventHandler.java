@@ -6,8 +6,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import project.ii.flowx.applications.service.communicate.NotificationService;
-import project.ii.flowx.applications.service.manage.UserActivityLogService;
 
 @Component
 @EnableAsync
