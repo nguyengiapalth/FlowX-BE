@@ -139,27 +139,41 @@ public class AuthenticationController {
     public FlowXResponse<AuthenticationResponse> refreshToken(
             HttpServletRequest request, 
             HttpServletResponse response) {
-        String refreshToken = getRefreshTokenFromCookie(request);
-        
-        if (refreshToken == null) {
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token not found");
+        try {
+            log.info("Refresh token request received from: {}", request.getRemoteAddr());
+            
+            String refreshToken = getRefreshTokenFromCookie(request);
+            
+            if (refreshToken == null) {
+                log.warn("No refresh token found in cookies");
+                throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token not found");
+            }
+            
+            log.info("Found refresh token in cookie, processing...");
+            RefreshTokenResponse tokenResponse = authenticationService.refreshToken(refreshToken);
+            
+            // Set new refresh token as cookie
+            setRefreshTokenCookie(response, tokenResponse.getRefreshToken());
+            
+            AuthenticationResponse authResponse = AuthenticationResponse.builder()
+                    .token(tokenResponse.getToken())
+                    .authenticated(true)
+                    .build();
+            
+            log.info("Token refresh completed successfully");
+            return FlowXResponse.<AuthenticationResponse>builder()
+                    .data(authResponse)
+                    .code(200)
+                    .message("Token refreshed successfully")
+                    .build();
+                    
+        } catch (FlowXException e) {
+            log.error("FlowX error during token refresh: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Token refresh failed: " + e.getMessage());
         }
-        
-        RefreshTokenResponse tokenResponse = authenticationService.refreshToken(refreshToken);
-        
-        // Set new refresh token as cookie
-        setRefreshTokenCookie(response, tokenResponse.getRefreshToken());
-        
-        AuthenticationResponse authResponse = AuthenticationResponse.builder()
-                .token(tokenResponse.getToken())
-                .authenticated(true)
-                .build();
-        
-        return FlowXResponse.<AuthenticationResponse>builder()
-                .data(authResponse)
-                .code(200)
-                .message("Token refreshed successfully")
-                .build();
     }
 
     @PostMapping("/forgot-password")

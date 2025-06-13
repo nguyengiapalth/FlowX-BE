@@ -128,6 +128,8 @@ public class AuthenticationService {
     @Transactional
     public RefreshTokenResponse refreshToken(String refreshTokenString) {
         try {
+            log.info("Attempting to refresh token for: {}", refreshTokenString.substring(0, Math.min(10, refreshTokenString.length())) + "...");
+            
             // Verify refresh token
             DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
                     .build()
@@ -135,6 +137,7 @@ public class AuthenticationService {
 
             // Check if token is invalidated
             if (invalidTokenRepository.existsByToken(refreshTokenString)) {
+                log.warn("Refresh token is already invalidated");
                 throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token is invalidated");
             }
 
@@ -142,6 +145,8 @@ public class AuthenticationService {
             Long userId = decodedJWT.getClaim("userId").asLong();
             String email = decodedJWT.getSubject();
             String scope = decodedJWT.getClaim("scope").asString();
+            
+            log.info("Refreshing token for user: {} (ID: {})", email, userId);
 
             // Load user details
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -155,6 +160,8 @@ public class AuthenticationService {
             InvalidToken invalidToken = new InvalidToken();
             invalidToken.setToken(refreshTokenString);
             invalidTokenRepository.save(invalidToken);
+            
+            log.info("Successfully refreshed token for user: {}", email);
 
             return RefreshTokenResponse.builder()
                     .token(newAccessToken)
@@ -162,9 +169,14 @@ public class AuthenticationService {
                     .build();
 
         } catch (JWTVerificationException e) {
+            log.error("JWT verification failed during refresh: {}", e.getMessage());
             throw new FlowXException(FlowXError.UNAUTHORIZED, "Invalid refresh token");
+        } catch (FlowXException e) {
+            // Re-throw FlowXException as-is
+            throw e;
         } catch (Exception e) {
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Error refreshing token");
+            log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
+            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR, "Error refreshing token: " + e.getMessage());
         }
     }
 

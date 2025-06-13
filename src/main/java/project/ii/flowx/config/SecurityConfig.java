@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import project.ii.flowx.security.JwtAuthenticationFilter;
+import project.ii.flowx.security.JwtAuthenticationEntryPoint;
+import project.ii.flowx.security.JwtAccessDeniedHandler;
 import project.ii.flowx.security.UserDetailsServiceImpl;
 
 import java.util.List;
@@ -29,6 +31,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final UserDetailsServiceImpl userDetailsService;
 
 
@@ -43,6 +47,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/authentication/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

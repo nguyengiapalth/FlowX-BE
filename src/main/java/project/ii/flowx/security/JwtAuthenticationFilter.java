@@ -22,6 +22,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.repository.InvalidTokenRepository;
+import project.ii.flowx.model.dto.FlowXResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,6 +38,7 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final InvalidTokenRepository invalidTokenRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${spring.jwt.secret}")
     private String jwtSecret;
@@ -47,32 +51,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             String jwt = getJwtFromRequest(request);
-            if (StringUtils.hasText(jwt) && validateToken(jwt)) {
-                DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
-                        .build()
-                        .verify(jwt);
-                Long id = decodedJWT.getClaim("userId").asLong();
-                String email = decodedJWT.getSubject();
-                String scope = decodedJWT.getClaim("scope").asString();
-                UserPrincipal userDetails = new UserPrincipal(id, email, null, Collections.emptyList());
+            if (StringUtils.hasText(jwt)) {
+                if (validateToken(jwt)) {
+                    DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(jwtSecret))
+                            .build()
+                            .verify(jwt);
+                    Long id = decodedJWT.getClaim("userId").asLong();
+                    String email = decodedJWT.getSubject();
+                    String scope = decodedJWT.getClaim("scope").asString();
+                    UserPrincipal userDetails = new UserPrincipal(id, email, null, Collections.emptyList());
 
-                List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+                    List<SimpleGrantedAuthority> authorities = Collections.emptyList();
 
-                if (StringUtils.hasText(scope)) {
-                    authorities = Arrays.stream(scope.split(" "))
-                            .map(SimpleGrantedAuthority::new)
-                            .collect(Collectors.toList());
+                    if (StringUtils.hasText(scope)) {
+                        authorities = Arrays.stream(scope.split(" "))
+                                .map(SimpleGrantedAuthority::new)
+                                .collect(Collectors.toList());
+                    }
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        }
-        catch (TokenExpiredException ex) {
-            log.error("Could not set user authentication in security context", ex);
-            throw new FlowXException(FlowXError.TOKEN_EXPIRED, "Token expired");
+        } catch (TokenExpiredException ex) {
+            log.error("Token expired: {}", ex.getMessage());
+            handleTokenExpired(response);
+            return; // Không tiếp tục filter chain
+        } catch (JWTVerificationException ex) {
+            log.error("JWT verification failed: {}", ex.getMessage());
+            handleInvalidToken(response);
+            return; // Không tiếp tục filter chain
         }
 
         filterChain.doFilter(request, response);
@@ -99,5 +109,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throw ex;
 //            return false;
         }
+    }
+
+    private void handleTokenExpired(HttpServletResponse response) throws IOException {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        
+        FlowXResponse<?> errorResponse = FlowXResponse.builder()
+                .code(401)
+                .message("Token expired")
+                .build();
+        
+        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+    }
+
+    private void handleInvalidToken(HttpServletResponse response) throws IOException {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        
+        FlowXResponse<?> errorResponse = FlowXResponse.builder()
+                .code(401)
+                .message("Invalid token")
+                .build();
+        
+        objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }
 }
