@@ -4,10 +4,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.events.TaskEvent;
 import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -39,6 +41,7 @@ public class TaskService {
     EntityLookupService entityLookupService;
     FileService fileService;
     AuthorizationService authorizationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canCreateTask(#taskCreateRequest.targetId, #taskCreateRequest.targetType)")
@@ -53,6 +56,22 @@ public class TaskService {
         task.setAssigner(user);
 
         task = taskRepository.save(task);
+        
+        // Publish task created event
+        eventPublisher.publishEvent(new TaskEvent.TaskCreatedEvent(
+                task.getId(), 
+                userId, 
+                task.getTitle(),
+                task.getTargetType().toString()));
+        
+        // If there's an assignee, publish task assigned event
+        if (task.getAssignee() != null) {
+            eventPublisher.publishEvent(new TaskEvent.TaskAssignedEvent(
+                    task.getId(), 
+                    task.getAssignee().getId(),
+                    userId,
+                    task.getTitle()));
+        }
 
         return populateFiles(taskMapper.toTaskResponse(task));
     }
@@ -61,8 +80,34 @@ public class TaskService {
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public TaskResponse updateTask(Long id, TaskUpdateRequest taskUpdateRequest) {
         Task task = getTaskByIdInternal(id);
+        Long oldAssigneeId = task.getAssignee() != null ? task.getAssignee().getId() : null;
+        
         taskMapper.updateTaskFromRequest(task, taskUpdateRequest);
         task = taskRepository.save(task);
+        
+        // Publish task updated event
+        Long userId = getUserId();
+        eventPublisher.publishEvent(new TaskEvent.TaskUpdatedEvent(task.getId(), userId, task.getTitle()));
+        
+        // Check if assignee changed
+        Long newAssigneeId = task.getAssignee() != null ? task.getAssignee().getId() : null;
+        if (!java.util.Objects.equals(oldAssigneeId, newAssigneeId)) {
+            if (oldAssigneeId != null) {
+                // Task was unassigned from previous assignee
+                eventPublisher.publishEvent(new TaskEvent.TaskUnassignedEvent(
+                        task.getId(), 
+                        oldAssigneeId, 
+                        task.getTitle()));
+            }
+            if (newAssigneeId != null) {
+                // Task was assigned to new assignee
+                eventPublisher.publishEvent(new TaskEvent.TaskAssignedEvent(
+                        task.getId(), 
+                        newAssigneeId,
+                        userId,
+                        task.getTitle()));
+            }
+        }
 
         return populateFiles(taskMapper.toTaskResponse(task));
     }
@@ -86,6 +131,9 @@ public class TaskService {
 
         if (status == TaskStatus.COMPLETED) {
             task.setIsCompleted(true);
+            // Publish task completed event
+            Long userId = getUserId();
+            eventPublisher.publishEvent(new TaskEvent.TaskCompletedEvent(task.getId(), userId, task.getTitle()));
         }
 
         task = taskRepository.save(task);
@@ -100,6 +148,11 @@ public class TaskService {
         task.setStatus(TaskStatus.COMPLETED);
 
         task = taskRepository.save(task);
+        
+        // Publish task completed event
+        Long userId = getUserId();
+        eventPublisher.publishEvent(new TaskEvent.TaskCompletedEvent(task.getId(), userId, task.getTitle()));
+        
         return populateFiles(taskMapper.toTaskResponse(task));
     }
 
@@ -118,6 +171,11 @@ public class TaskService {
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.isTaskAssigner(#id) or @authorize.isTaskManager(#id)")
     public void deleteTask(Long id) {
         Task task = getTaskByIdInternal(id);
+        
+        // Publish task deleted event
+        Long userId = getUserId();
+        eventPublisher.publishEvent(new TaskEvent.TaskDeletedEvent(task.getId(), userId, task.getTitle()));
+        
         taskRepository.delete(task);
     }
 
@@ -210,6 +268,65 @@ public class TaskService {
 
     public List<Task> getOverdueTasks() {
         return taskRepository.findOverdueTasks();
+    }
+    
+    public List<Task> getTasksDueInDays(int days) {
+        return taskRepository.findTasksDueInDays(days);
+    }
+    
+    // Method to send due date reminders (can be called by scheduled job)
+    @Transactional(readOnly = true)
+    public void sendDueDateReminders() {
+        List<Task> tasksDueToday = getTasksDueToday();
+        
+        for (Task task : tasksDueToday) {
+            if (task.getAssignee() != null) {
+                eventPublisher.publishEvent(new TaskEvent.TaskDueDateReminderEvent(
+                        task.getId(),
+                        task.getAssignee().getId(),
+                        task.getTitle(),
+                        0 // due today
+                ));
+            }
+        }
+    }
+    
+    // Method to send overdue notifications (can be called by scheduled job)
+    @Transactional(readOnly = true)
+    public void sendOverdueNotifications() {
+        List<Task> overdueTasks = getOverdueTasks();
+        
+        for (Task task : overdueTasks) {
+            if (task.getAssignee() != null) {
+                // Calculate days overdue
+                long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(task.getDueDate(), java.time.LocalDate.now());
+                
+                eventPublisher.publishEvent(new TaskEvent.TaskOverdueEvent(
+                        task.getId(),
+                        task.getAssignee().getId(),
+                        task.getTitle(),
+                        (int) daysOverdue
+                ));
+            }
+        }
+    }
+    
+    // Method to send specific task due date reminder
+    @Transactional(readOnly = true)
+    public void sendTaskDueDateReminder(Long taskId, int daysUntilDue) {
+        try {
+            Task task = getTaskByIdInternal(taskId);
+            if (task.getAssignee() != null) {
+                eventPublisher.publishEvent(new TaskEvent.TaskDueDateReminderEvent(
+                        task.getId(),
+                        task.getAssignee().getId(),
+                        task.getTitle(),
+                        daysUntilDue
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Failed to send due date reminder for task {}: {}", taskId, e.getMessage(), e);
+        }
     }
 
     // Populate files for TaskResponse, similar to ContentService

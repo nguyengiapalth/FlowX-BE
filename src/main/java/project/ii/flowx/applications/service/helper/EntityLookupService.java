@@ -10,6 +10,7 @@ import project.ii.flowx.model.repository.*;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -91,5 +92,16 @@ public class EntityLookupService {
 
     public Optional<Role> getRoleByName(String roleName) {
         return roleRepository.findByName(roleName);
+    }
+
+    public List<User> getUsersByDepartmentId(Long departmentId) {
+        return userRepository.findByDepartmentId(departmentId);
+    }
+
+    public List<User> getUsersByProjectId(Long projectId) {
+        List<ProjectMember> projectMembers = projectMemberRepository.findByProjectId(projectId);
+        return projectMembers.stream()
+                .map(ProjectMember::getUser)
+                .toList();
     }
 }

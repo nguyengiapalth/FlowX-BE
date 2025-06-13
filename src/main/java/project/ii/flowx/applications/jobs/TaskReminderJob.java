@@ -10,57 +10,77 @@ import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.applications.service.communicate.TaskService;
 import project.ii.flowx.model.entity.Task;
-import project.ii.flowx.model.entity.User;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @EnableScheduling
-public class TaskReminderJob{
-     private final TaskService taskService;
-     private final NotificationService notificationService;
+public class TaskReminderJob {
+    TaskService taskService;
+    NotificationService notificationService;
 
-     @Scheduled(cron = "0 0 8 * * ?") // Every day at 8 AM
+    @Scheduled(cron = "0 0 8 * * ?") // Every day at 8 AM
     public void sendTaskReminders() {
         log.info("Starting task reminder job at {}", java.time.LocalDateTime.now());
-         List<Task> tasksDueToday = taskService.getTasksDueToday();
-         // for each user, send a reminder for their tasks
-         Map<User, List<Task>> tasksByUser = tasksDueToday.stream()
-                 .collect(Collectors.groupingBy(Task::getAssignee));
-
-         tasksByUser.forEach((user, tasks) -> {
-             try {
-//                 notificationService.sendTaskReminder(user, tasks);
-                 log.info("Sent reminder for user: {} with {} tasks", user.getId(), tasks.size());
-             } catch (Exception e) {
-                 log.error("Failed to send reminder for user: {}", user.getId(), e);
-             }
-         });
+        
+        try {
+            // Use the new event-based notification system
+            taskService.sendDueDateReminders();
+            log.info("Task due date reminders sent successfully");
+        } catch (Exception e) {
+            log.error("Failed to send task due date reminders: {}", e.getMessage(), e);
+        }
 
         log.info("Task reminder job completed.");
     }
 
-    @Scheduled(fixedRate = 600000) // Every 10 minutes
+    @Scheduled(cron = "0 0 9,14,17 * * ?") // Every day at 9 AM, 2 PM, and 5 PM
     public void sendOverdueTaskReminders() {
         log.info("Starting overdue task reminder job at {}", java.time.LocalDateTime.now());
-        List<Task> overdueTasks = taskService.getOverdueTasks();
-
-        // for each user, send a reminder for their overdue tasks
-        Map<User, List<Task>> tasksByUser = overdueTasks.stream()
-                .collect(Collectors.groupingBy(Task::getAssignee));
-
-        tasksByUser.forEach((user, tasks) -> {
-            try {
-//                notificationService.sendOverdueTaskReminder(user, tasks);
-                log.info("Sent overdue task reminder for user: {} with {} tasks", user.getId(), tasks.size());
-            } catch (Exception e) {
-                log.error("Failed to send overdue task reminder for user: {}", user.getId(), e);
+        
+        try {
+            // Use the new event-based notification system
+            taskService.sendOverdueNotifications();
+            log.info("Overdue task notifications sent successfully");
+        } catch (Exception e) {
+            log.error("Failed to send overdue task notifications: {}", e.getMessage(), e);
+        }
+        
+        log.info("Overdue task reminder job completed.");
+    }
+    
+    // Additional job for upcoming deadline warnings (3 days, 1 day before due)
+    @Scheduled(cron = "0 0 8 * * ?") // Every day at 8 AM
+    public void sendUpcomingDeadlineWarnings() {
+        log.info("Starting upcoming deadline warning job at {}", java.time.LocalDateTime.now());
+        
+        try {
+            // Send warnings for tasks due in 3 days
+            sendUpcomingDeadlineWarning(3);
+            
+            // Send warnings for tasks due in 1 day
+            sendUpcomingDeadlineWarning(1);
+            
+            log.info("Upcoming deadline warnings sent successfully");
+        } catch (Exception e) {
+            log.error("Failed to send upcoming deadline warnings: {}", e.getMessage(), e);
+        }
+        
+        log.info("Upcoming deadline warning job completed.");
+    }
+    
+    private void sendUpcomingDeadlineWarning(int daysUntilDue) {
+        List<Task> tasks = taskService.getTasksDueInDays(daysUntilDue);
+        
+        for (Task task : tasks) {
+            if (task.getAssignee() != null) {
+                taskService.sendTaskDueDateReminder(task.getId(), daysUntilDue);
             }
-        });
+        }
+        
+        log.info("Sent {} upcoming deadline warnings for tasks due in {} days", tasks.size(), daysUntilDue);
     }
 }

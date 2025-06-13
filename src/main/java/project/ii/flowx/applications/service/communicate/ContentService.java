@@ -4,11 +4,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.ii.flowx.applications.events.ContentEvent;
 import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -37,9 +39,11 @@ public class ContentService {
     EntityLookupService entityLookupService;
     FileService fileService;
     AuthorizationService authorizationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#request.targetId, #request.contentTargetType)")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
+            "or @authorize.canAccessScope(#request.targetId, #request.contentTargetType)")
     public ContentResponse createContent(ContentCreateRequest request) {
          Long userId = getUserId();
          User author = entityLookupService.getUserById(userId);
@@ -65,6 +69,22 @@ public class ContentService {
         
         content = contentRepository.save(content);
         
+        // Publish content created event
+        eventPublisher.publishEvent(new ContentEvent.ContentCreatedEvent(
+                content.getId(),
+                content.getBody(),
+                content.getContentTargetType().toString(),
+                userId
+        ));
+        
+        // If this is a reply, publish reply event
+        if (content.getParent() != null) {
+            eventPublisher.publishEvent(new ContentEvent.ContentRepliedEvent(
+                    content.getParent().getId(),
+                    userId
+            ));
+        }
+        
         ContentResponse response = contentMapper.toContentResponse(content);
         return populateFiles(response);
     }
@@ -79,6 +99,14 @@ public class ContentService {
         // Note: hasFile will be managed separately when files are uploaded/removed
         
         content = contentRepository.save(content);
+        
+        // Publish content updated event
+        eventPublisher.publishEvent(new ContentEvent.ContentUpdatedEvent(
+                content.getId(),
+                content.getBody(),
+                content.getContentTargetType().toString()
+        ));
+        
         ContentResponse response = contentMapper.toContentResponse(content);
         return populateFiles(response);
     }
@@ -105,6 +133,10 @@ public class ContentService {
     public void deleteContent(Long id) {
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
+        
+        // Publish content deleted event
+        eventPublisher.publishEvent(new ContentEvent.ContentDeletedEvent(id));
+        
         contentRepository.delete(content);
     }
 
@@ -152,8 +184,29 @@ public class ContentService {
     public ContentResponse getContentById(Long id) {
         Content content = contentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
+        
+        // Publish content viewed event
+        Long userId = getUserId();
+        eventPublisher.publishEvent(new ContentEvent.ContentViewedEvent(id, userId));
+        
         ContentResponse response = contentMapper.toContentResponse(content);
         return populateFiles(response);
+    }
+
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessContent(#contentId)")
+    public void shareContent(Long contentId, String sharedWith) {
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
+        
+        Long userId = getUserId();
+        
+        // Publish content shared event
+        eventPublisher.publishEvent(new ContentEvent.ContentSharedEvent(
+                contentId, 
+                userId, 
+                sharedWith
+        ));
     }
 
     // Helper method to get the current authenticated user's ID

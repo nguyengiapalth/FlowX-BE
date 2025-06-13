@@ -73,25 +73,23 @@ public class MailService {
     @Async
     public void sendPasswordResetEmail(String toEmail, String token, String userName) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(toEmail);
-            message.setSubject("FlowX - Đặt lại mật khẩu");
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            ClassPathResource resource = new ClassPathResource("templates/reset-password-mail.html");
+            String htmlContent = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
 
             String resetUrl = frontendUrl + "/reset-password?token=" + token;
-            String emailContent = String.format(
-                    "Xin chào %s,\n\n" +
-                            "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản FlowX của mình.\n\n" +
-                            "Vui lòng nhấp vào liên kết bên dưới để đặt lại mật khẩu:\n" +
-                            "%s\n\n" +
-                            "Liên kết này sẽ hết hạn sau 15 phút.\n\n" +
-                            "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n" +
-                            "Trân trọng,\n" +
-                            "Đội ngũ FlowX",
-                    userName, resetUrl
-            );
+            
+            // Replace placeholders in the HTML content
+            htmlContent = htmlContent.replace("{{userName}}", userName)
+                                   .replace("{{resetUrl}}", resetUrl);
 
-            message.setText(emailContent);
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("FlowX - Đặt lại mật khẩu");
+            helper.setText(htmlContent, true);
+
             mailSender.send(message);
         } catch (Exception e) {
             throw new RuntimeException("Failed to send email", e);

@@ -229,4 +229,32 @@ public class ContentController {
                 .code(200)
                 .build();
     }
+
+    @Operation(
+            summary = "Share content",
+            description = "Shares a content with specified users or groups.",
+            parameters = {
+                    @Parameter(name = "contentId", description = "ID of the content to share")
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Content shared successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Content not found"
+                    )
+            }
+    )
+    @PostMapping("/{contentId}/share")
+    public FlowXResponse<Void> shareContent(
+            @PathVariable Long contentId, 
+            @RequestParam String sharedWith) {
+        contentService.shareContent(contentId, sharedWith);
+        return FlowXResponse.<Void>builder()
+                .message("Content shared successfully")
+                .code(200)
+                .build();
+    }
 }
