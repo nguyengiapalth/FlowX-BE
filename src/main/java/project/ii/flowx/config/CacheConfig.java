@@ -67,11 +67,8 @@ public class CacheConfig {
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("files", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("tasks", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigurations.put("userLocalRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("roles", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("contents", defaultConfig.entryTtl(Duration.ofMinutes(10)));
-
-        cacheConfigurations.put("userRoles", defaultConfig.entryTtl(Duration.ofMinutes(10)));
-
 
         log.info("Configured Redis cache manager with default TTL: {} seconds", defaultTtl);
         return RedisCacheManager.builder(connectionFactory)
