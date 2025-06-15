@@ -173,14 +173,14 @@ public class AuthorizationService {
         if (content.getContentTargetType() == ContentTargetType.PRIVATE) return false; // Only the author can access private content
         if (isGlobalManager()) return true;
 
-        // Check if the user has a manager role in the target department or project
+        // Check if the user has a  member role in the target department or project
         if (content.getContentTargetType() == ContentTargetType.GLOBAL) return true;
         if (content.getContentTargetType() == ContentTargetType.DEPARTMENT)
-            return hasDepartmentRole("MANAGER", content.getTargetId());
+            return hasDepartmentRole("MEMBER", content.getTargetId());
         if (content.getContentTargetType() == ContentTargetType.PROJECT)
-            return hasProjectRole("MANAGER", content.getTargetId());
+            return hasProjectRole("MEMBER", content.getTargetId());
 
-        return false; // No access if not author or manager
+        return false; // No access if not author or member
     }
 
     private Long getUserId() {

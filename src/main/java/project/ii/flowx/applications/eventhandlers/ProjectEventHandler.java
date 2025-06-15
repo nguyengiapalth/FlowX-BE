@@ -88,9 +88,10 @@ public class ProjectEventHandler {
 
     @EventListener
     public void handleUpdateMemberEvent(ProjectEvent.UpdateMemberRoleEvent event) {
+        Role role = entityLookupService.getRoleByName("MANAGER")
+                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
+
         if (event.newRole() == RoleDefault.MANAGER) {
-            Role role = entityLookupService.getRoleByName("MANAGER")
-                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
             UserRoleCreateRequest userRoleCreateRequest = UserRoleCreateRequest.builder()
                     .userId(event.userId())
                     .roleId(role.getId())
@@ -101,7 +102,7 @@ public class ProjectEventHandler {
         }
         else {
             // delete Manager role if exists
-            userRoleService.deleteUserRolesByUserIdAndScope(event.userId(), RoleScope.PROJECT, event.projectId());
+            userRoleService.deleteUserRoleByUserIdAndRoleIdAndScope(event.userId(), role.getId(), RoleScope.PROJECT, event.projectId());
         }
     }
 }
