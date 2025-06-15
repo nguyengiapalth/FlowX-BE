@@ -11,10 +11,16 @@ import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.events.ContentEvent;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
+import project.ii.flowx.applications.service.manage.UserService;
+import project.ii.flowx.applications.service.manage.DepartmentService;
+import project.ii.flowx.applications.service.manage.ProjectService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
+import project.ii.flowx.model.dto.content.ContentResponse;
+import project.ii.flowx.model.dto.file.FileResponse;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.entity.Content;
+import project.ii.flowx.model.entity.File;
 import project.ii.flowx.model.entity.User;
 import project.ii.flowx.model.repository.ContentRepository;
 import project.ii.flowx.shared.enums.ContentTargetType;
@@ -30,6 +36,9 @@ public class ContentEventHandler {
     NotificationService notificationService;
     EntityLookupService entityLookupService;
     ContentRepository contentRepository;
+    UserService userService;
+    DepartmentService departmentService;
+    ProjectService projectService;
 
     @EventListener
     @Async
@@ -162,42 +171,54 @@ public class ContentEventHandler {
     }
 
     @EventListener
+    public void handleAvatarUpdatedEvent(ContentEvent.AvatarUpdatedEvent event) {
+        log.info("Avatar updated event: {}", event);
+        try {
+            Content content = event.content();
+            File fileResponse = entityLookupService.getFileById(event.fileId());
+            userService.updateUserAvatarObjectKey(content.getAuthor().getId(), fileResponse.getObjectKey());
+            log.info("Avatar updated synchronously for user: {}", content.getAuthor().getId());
+        } catch (Exception e) {
+            log.error("Error updating avatar synchronously: {}", e.getMessage(), e);
+        }
+    }
+
+    @EventListener
+    public void handleBackgroundUpdatedEvent(ContentEvent.BackgroundUpdatedEvent event) {
+        log.info("Background updated event: {}", event);
+        try {
+            Content content = event.content();
+            File fileResponse = entityLookupService.getFileById(event.fileId());
+
+            switch (content.getContentTargetType()) {
+                case DEPARTMENT -> {
+                    departmentService.updateDepartmentBackgroundObjectKey(
+                            content.getTargetId(), fileResponse.getObjectKey());
+                    log.info("Department background updated synchronously: {}", content.getTargetId());
+                }
+                case PROJECT -> {
+                    projectService.updateProjectBackgroundObjectKey(
+                            content.getTargetId(), fileResponse.getObjectKey());
+                    log.info("Project background updated synchronously: {}", content.getTargetId());
+                }
+                case GLOBAL -> {
+                    userService.updateUserBackgroundObjectKey(content.getAuthor().getId(), fileResponse.getObjectKey());
+                    log.info("User background updated synchronously: {}", content.getAuthor().getId());
+                }
+                default -> log.warn("Unsupported content target type for background update: {}",
+                        content.getContentTargetType());
+            }
+        } catch (Exception e) {
+            log.error("Error updating background synchronously: {}", e.getMessage(), e);
+        }
+    }
+
+    @EventListener
     @Async
     public void handleContentViewedEvent(ContentEvent.ContentViewedEvent event) {
         log.info("Content viewed event: {}", event);
         // This could be used for analytics or read receipts
         // For now, we'll just log it
-    }
-
-    @EventListener
-    @Async
-    public void handleContentSharedEvent(ContentEvent.ContentSharedEvent event) {
-        log.info("Content shared event: {}", event);
-        
-        try {
-            Content content = contentRepository.findById(event.contentId())
-                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
-            
-            User sharer = entityLookupService.getUserById(event.userId());
-            User contentAuthor = content.getAuthor();
-            
-            // Notify the content author that their content was shared
-            if (!contentAuthor.getId().equals(event.userId())) {
-                NotificationCreateRequest notificationRequest = NotificationCreateRequest.builder()
-                        .userId(contentAuthor.getId())
-                        .title("Nội dung được chia sẻ")
-                        .content(String.format("%s đã chia sẻ nội dung của bạn với %s", 
-                                sharer.getFullName(), 
-                                event.sharedWith()))
-                        .entityType("CONTENT")
-                        .entityId(event.contentId())
-                        .build();
-                
-                notificationService.createNotification(notificationRequest);
-            }
-        } catch (Exception e) {
-            log.error("Error handling content shared event: {}", e.getMessage(), e);
-        }
     }
 
     private List<User> getNotificationRecipients(Content content) {
@@ -230,4 +251,6 @@ public class ContentEventHandler {
         if (content == null) return "";
         return content.length() > 100 ? content.substring(0, 100) + "..." : content;
     }
+
+
 }

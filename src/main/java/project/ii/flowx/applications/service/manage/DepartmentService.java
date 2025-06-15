@@ -121,4 +121,26 @@ public class DepartmentService {
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
         return departmentMapper.toDepartmentResponse(department);
     }
+
+    /**
+     * Internal method to update department background object key without security checks
+     * Used by event handlers
+     */
+    @Transactional
+    public void updateDepartmentBackgroundObjectKey(Long departmentId, String objectKey) {
+        log.debug("Starting background object key update for department {} with objectKey: {}", departmentId, objectKey);
+        try {
+            Department department = departmentRepository.findById(departmentId)
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
+            
+            String oldBackground = department.getBackground();
+            department.setBackground(objectKey);
+            departmentRepository.save(department);
+            
+            log.info("Successfully updated background object key for department {}: {} -> {}", departmentId, oldBackground, objectKey);
+        } catch (Exception e) {
+            log.error("Error updating background object key for department {}: {}", departmentId, e.getMessage(), e);
+            throw e; // Re-throw to ensure proper error handling
+        }
+    }
 }

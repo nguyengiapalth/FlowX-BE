@@ -363,30 +363,5 @@ public class TaskController {
                 .build();
     }
 
-    @Operation(
-            summary = "Update hasFiles flag for task",
-            description = "Updates the hasFiles flag based on actual files associated with the task. This should be called after uploading or deleting files.",
-            parameters = {
-                    @Parameter(name = "id", description = "ID of the task")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "HasFiles flag updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Task not found"
-                    )
-            }
-    )
-    @PutMapping("/{id}/sync-files")
-    public FlowXResponse<Void> syncTaskFiles(@PathVariable Long id) {
-        log.info("Syncing files for task ID: {}", id);
-        taskService.updateHasFileFlag(id);
-        return FlowXResponse.<Void>builder()
-                .message("Task files synchronized successfully")
-                .code(200)
-                .build();
-    }
+
 }

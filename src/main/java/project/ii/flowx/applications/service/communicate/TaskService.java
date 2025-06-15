@@ -113,12 +113,20 @@ public class TaskService {
     }
 
     @Transactional
-    @PreAuthorize("isAuthenticated()")
     public void updateHasFileFlag(Long taskId) {
-        Task task = getTaskByIdInternal(taskId);
-        List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.TASK, taskId);
-        task.setHasFiles(!files.isEmpty());
-        taskRepository.save(task);
+        try {
+            Task task = getTaskByIdInternal(taskId);
+            List<FileResponse> files = fileService.getFilesByEntity(FileTargetType.TASK, taskId);
+            boolean hasFiles = !files.isEmpty();
+            
+            if (task.getHasFiles() != hasFiles) {
+                task.setHasFiles(hasFiles);
+                taskRepository.save(task);
+                log.info("Updated hasFile flag for task {}: {}", taskId, hasFiles);
+            }
+        } catch (Exception e) {
+            log.error("Error updating hasFile flag for task {}: {}", taskId, e.getMessage());
+        }
     }
 
     @Transactional

@@ -23,8 +23,8 @@ import java.util.List;
 @EnableScheduling
 public class FileUploadCleanupJob {
 
-    private FileService fileService;
-    private MinioService minioService;
+    FileService fileService;
+    MinioService minioService;
 
     // Chạy mỗi 2 phút
     @Scheduled(fixedRate = 120000)
@@ -39,11 +39,11 @@ public class FileUploadCleanupJob {
                     // File đã upload thành công
                     StatObjectResponse objectInfo = minioService.getObjectInfo(file.getObjectKey());
 
-                    file.setFileStatus(FileStatus.UPLOADED);
                     file.setActualSize(objectInfo.size());
-                    fileService.update(file);
+                    // Use the new method that publishes events for hasFile flag sync
+                    fileService.markFileAsUploaded(file);
 
-                    log.info("File upload completed: {}", file.getId());
+                    log.info("File upload completed with event published: {}", file.getId());
 
                 } else {
                     log.info("file {} is still processing, checking for timeout...", file.getId());

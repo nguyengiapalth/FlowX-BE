@@ -185,4 +185,26 @@ public class ProjectService {
                 .filter(project -> authorizationService.hasProjectRole("MEMBER", project.getId()))
                 .toList();
     }
+
+    /**
+     * Internal method to update project background object key without security checks
+     * Used by event handlers
+     */
+    @Transactional
+    public void updateProjectBackgroundObjectKey(Long projectId, String objectKey) {
+        log.debug("Starting background object key update for project {} with objectKey: {}", projectId, objectKey);
+        try {
+            Project project = projectRepository.findById(projectId)
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Project not found"));
+            
+            String oldBackground = project.getBackground();
+            project.setBackground(objectKey);
+            projectRepository.save(project);
+            
+            log.info("Successfully updated background object key for project {}: {} -> {}", projectId, oldBackground, objectKey);
+        } catch (Exception e) {
+            log.error("Error updating background object key for project {}: {}", projectId, e.getMessage(), e);
+            throw e; // Re-throw to ensure proper error handling
+        }
+    }
 }

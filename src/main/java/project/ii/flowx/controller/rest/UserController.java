@@ -25,7 +25,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")  // Cho phép tất cả các origin
+@CrossOrigin(origins = "*")
 @Tag(name = "User", description = "User API")
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
@@ -228,58 +228,6 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Update my avatar",
-            description = "Updates the avatar of the currently authenticated user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Avatar updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "User not found"
-                    )
-            }
-    )
-    @PutMapping("/my-avatar")
-    public FlowXResponse<UserResponse> updateMyAvatar(@RequestBody String avatar) {
-        log.info("Updating avatar for user: {}", avatar);
-        // trim the avatar string to remove any leading or trailing whitespace
-        String cleaned = avatar.substring(1, avatar.length() - 1);
-        return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateMyAvatar(cleaned))
-                .message("Avatar updated successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Update my background",
-            description = "Updates the background of the currently authenticated user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Background updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "User not found"
-                    )
-            }
-    )
-    @PutMapping("/my-background")
-    public FlowXResponse<UserResponse> updateMyBackground(@RequestBody String background) {
-        log.info("Updating background for user: {}", background);
-        String cleaned = background.substring(1, background.length() - 1);
-
-        return FlowXResponse.<UserResponse>builder()
-                .data(userService.updateMyBackground(cleaned))
-                .message("Background updated successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
             summary = "Get all users",
             description = "Retrieves a list of all users in the system.",
             responses = {
@@ -289,7 +237,7 @@ public class UserController {
                     )
             }
     )
-    @GetMapping("/getall")
+    @GetMapping("/get-all")
     public FlowXResponse<List<UserResponse>> getAllUsers() {
         return FlowXResponse.<List<UserResponse>>builder()
                 .data(userService.getAllUsers())

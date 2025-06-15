@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.events.ContentEvent;
+import project.ii.flowx.applications.events.FileEvent;
 import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -112,8 +113,8 @@ public class ContentService {
     }
 
     @Transactional
-    @PreAuthorize("@authorize.isContentAuthor(#contentId)")
-    public void updateHasFileFlag(Long contentId) {
+    public void updateHasFileFlag(Long contentId, Long fileId) {
+        // Update hasFile flag based on actual file count
         Content content = contentRepository.findById(contentId)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
 
@@ -124,8 +125,36 @@ public class ContentService {
             if (content.isHasFile() != hasFiles) {
                 content.setHasFile(hasFiles);
                 contentRepository.save(content);
+                log.info("Updated hasFile flag for content {}: {}", contentId, hasFiles);
             }
-        } catch (Exception ignored) {}
+        }
+        catch (Exception e) {
+            log.error("Error updating hasFile flag for content {}: {}", contentId, e.getMessage());
+        }
+
+        // Check for avatar/background updates synchronously within same transaction
+        try {
+            if (content.getSubtitle() != null) {
+                String subtitle = content.getSubtitle().toLowerCase();
+                log.debug("Checking subtitle '{}' for avatar/background update patterns", subtitle);
+                
+                if (subtitle.contains("đã cập nhật ảnh đại diện") || subtitle.contains("updated avatar")) {
+                    log.info("Avatar update detected for content {}: subtitle '{}'", contentId, content.getSubtitle());
+                    // Trigger event synchronously within transaction
+                    ContentEvent.AvatarUpdatedEvent avatarUpdatedEvent = new ContentEvent.AvatarUpdatedEvent(content, fileId);
+                    eventPublisher.publishEvent(avatarUpdatedEvent);
+                } else if (subtitle.contains("đã thay đổi ảnh bìa") || subtitle.contains("updated background")) {
+                    log.info("Background update detected for content {}: subtitle '{}'", contentId, content.getSubtitle());
+                    // Trigger event synchronously within transaction
+                    ContentEvent.BackgroundUpdatedEvent backgroundUpdatedEvent = new ContentEvent.BackgroundUpdatedEvent(content, fileId);
+                    eventPublisher.publishEvent(backgroundUpdatedEvent);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error checking for avatar/background update: {}", e.getMessage(), e);
+        }
+        
+        log.debug("Completed hasFile flag and avatar/background update for content {}", contentId);
     }
 
     @Transactional
@@ -191,22 +220,6 @@ public class ContentService {
         
         ContentResponse response = contentMapper.toContentResponse(content);
         return populateFiles(response);
-    }
-
-    @Transactional
-    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessContent(#contentId)")
-    public void shareContent(Long contentId, String sharedWith) {
-        Content content = contentRepository.findById(contentId)
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Content not found"));
-        
-        Long userId = getUserId();
-        
-        // Publish content shared event
-        eventPublisher.publishEvent(new ContentEvent.ContentSharedEvent(
-                contentId, 
-                userId, 
-                sharedWith
-        ));
     }
 
     // Helper method to get the current authenticated user's ID

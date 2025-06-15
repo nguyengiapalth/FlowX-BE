@@ -23,6 +23,7 @@ import project.ii.flowx.model.repository.FileRepository;
 import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
+import project.ii.flowx.applications.events.FileEvent;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -85,11 +86,25 @@ public class FileService {
     public void deleteFile(Long fileId) {
         try {
             File file = getFileById(fileId);
+            Long uploaderId = file.getUploader() != null ? file.getUploader().getId() : null;
+            String fileName = file.getName();
+            Long entityId = file.getTargetId();
+            String entityType = file.getFileTargetType().toString();
 
             minioService.removeObject(file);
             fileRepository.delete(file);
 
+            // Publish file deleted event to trigger hasFile flag sync
+            eventPublisher.publishEvent(new FileEvent.FileDeletedEvent(
+                    fileId, 
+                    fileName, 
+                    uploaderId,
+                    entityId,
+                    entityType,
+                    file.getObjectKey()
+            ));
 
+            log.info("File deleted and event published: {}", fileId);
         } catch (Exception e) {
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to delete file: " + e.getMessage());
@@ -140,6 +155,28 @@ public class FileService {
         }
 
         return fileRepository.findByFileStatusAndCreatedAtBefore(fileStatus, cutoff);
+    }
+
+    /**
+     * Method to be called when a file upload is completed (called from FileUploadCleanupJob)
+     */
+    @Transactional
+    public void markFileAsUploaded(File file) {
+        file.setFileStatus(FileStatus.UPLOADED);
+        fileRepository.save(file);
+        
+        // Publish file uploaded event to trigger hasFile flag sync
+        Long uploaderId = file.getUploader() != null ? file.getUploader().getId() : null;
+        eventPublisher.publishEvent(new FileEvent.FileUploadedEvent(
+                file.getId(),
+                file.getName(),
+                uploaderId,
+                file.getTargetId(),
+                file.getFileTargetType().toString(),
+                file.getObjectKey()
+        ));
+        
+        log.info("File upload completed and event published: {}", file.getId());
     }
 
     // heper method

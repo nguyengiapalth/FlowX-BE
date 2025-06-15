@@ -167,6 +167,8 @@ public class UserService {
         user.setAvatar(avatar);
         userRepository.save(user);
 
+        log.info("Avatar updated for user {}: {}", userId, avatar);
+
         return getMyProfile();
     }
 
@@ -182,7 +184,53 @@ public class UserService {
         user.setBackground(background);
         userRepository.save(user);
 
+        log.info("Background updated for user {}: {}", userId, background);
+
         return getMyProfile();
+    }
+
+    /**
+     * Internal method to update user avatar object key without security checks
+     * Used by event handlers
+     */
+    @Transactional
+    public void updateUserAvatarObjectKey(Long userId, String objectKey) {
+        log.debug("Starting avatar object key update for user {} with objectKey: {}", userId, objectKey);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+            
+            String oldAvatar = user.getAvatar();
+            user.setAvatar(objectKey);
+            userRepository.save(user);
+            
+            log.info("Successfully updated avatar object key for user {}: {} -> {}", userId, oldAvatar, objectKey);
+        } catch (Exception e) {
+            log.error("Error updating avatar object key for user {}: {}", userId, e.getMessage(), e);
+            throw e; // Re-throw to ensure proper error handling
+        }
+    }
+
+    /**
+     * Internal method to update user background object key without security checks
+     * Used by event handlers
+     */
+    @Transactional
+    public void updateUserBackgroundObjectKey(Long userId, String objectKey) {
+        log.debug("Starting background object key update for user {} with objectKey: {}", userId, objectKey);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "User not found"));
+            
+            String oldBackground = user.getBackground();
+            user.setBackground(objectKey);
+            userRepository.save(user);
+            
+            log.info("Successfully updated background object key for user {}: {} -> {}", userId, oldBackground, objectKey);
+        } catch (Exception e) {
+            log.error("Error updating background object key for user {}: {}", userId, e.getMessage(), e);
+            throw e; // Re-throw to ensure proper error handling
+        }
     }
 
     @Transactional(readOnly = true)

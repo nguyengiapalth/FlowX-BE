@@ -7,6 +7,8 @@ public enum FileTargetType {
     TASK,
     MESSAGE,
     CONTENT,
-    NOTIFICATION
+    NOTIFICATION,
+    AVATAR,
+    BACKGROUND
     ;
 }
