@@ -231,4 +231,32 @@ public class FileController {
                 .build();
     }
 
+    @Operation(
+            summary = "Confirm file upload",
+            description = "Confirms that a file has been successfully uploaded to MinIO storage.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "File upload confirmed successfully"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "File not found"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "File upload confirmation failed"
+                    )
+            }
+    )
+    @PostMapping("/file/confirm-upload/{fileId}")
+    public FlowXResponse<Void> confirmFileUpload(@PathVariable Long fileId) {
+        log.info("Confirm file upload request for file ID: {}", fileId);
+        fileService.confirmFileUpload(fileId);
+        return FlowXResponse.<Void>builder()
+                .code(200)
+                .message("File upload confirmed successfully")
+                .build();
+    }
+
 }

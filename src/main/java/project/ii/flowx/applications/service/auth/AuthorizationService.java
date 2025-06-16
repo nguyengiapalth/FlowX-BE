@@ -113,7 +113,7 @@ public class AuthorizationService {
             return hasDepartmentRole("MANAGER", task.getTargetId());
         if (task.getTargetType() == ContentTargetType.PROJECT)
             return hasProjectRole("MANAGER", task.getTargetId());
-        else return false;
+        else return isGlobalManager();
     }
 
     public boolean canCreateTask(Long targetId, ContentTargetType targetType) {

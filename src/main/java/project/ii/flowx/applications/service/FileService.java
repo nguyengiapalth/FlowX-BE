@@ -24,6 +24,7 @@ import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
 import project.ii.flowx.applications.events.FileEvent;
+import io.minio.StatObjectResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -69,8 +70,7 @@ public class FileService {
         File file = getFileById(fileId);
         try {
             // Generate presigned URL for download
-            String presignedUrl = minioService.getPresignedDownloadUrl(file, 3600);
-            return presignedUrl;
+            return minioService.getPresignedDownloadUrl(file, 3600);
         } catch (Exception e) {
             throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
                     "Failed to generate download URL: " + e.getMessage());
@@ -177,6 +177,46 @@ public class FileService {
         ));
         
         log.info("File upload completed and event published: {}", file.getId());
+    }
+
+    /**
+     * Method to be called from FE to confirm file upload success
+     */
+    @Transactional
+    public void confirmFileUpload(Long fileId) {
+        File file = getFileById(fileId);
+        
+        // Validate that file is in PROCESSING status
+        if (file.getFileStatus() != FileStatus.PROCESSING) {
+            throw new FlowXException(FlowXError.BAD_REQUEST, 
+                "File is not in processing status. Current status: " + file.getFileStatus());
+        }
+        
+        try {
+            // Check if file exists in MinIO
+            if (!minioService.objectExists(file.getObjectKey())) {
+                throw new FlowXException(FlowXError.BAD_REQUEST, 
+                    "File not found in storage. Upload may have failed.");
+            }
+            
+            // Get actual file size from MinIO
+            StatObjectResponse objectInfo = minioService.getObjectInfo(file.getObjectKey());
+            file.setActualSize(objectInfo.size());
+            
+            // Mark file as uploaded
+            markFileAsUploaded(file);
+            
+            log.info("File upload confirmed by FE: {}", file.getId());
+            
+        } catch (Exception e) {
+            // If any error occurs, mark file as failed
+            file.setFileStatus(FileStatus.FAILED);
+            fileRepository.save(file);
+            
+            log.error("File upload confirmation failed for file {}: {}", file.getId(), e.getMessage());
+            throw new FlowXException(FlowXError.BAD_REQUEST, 
+                "File upload confirmation failed: " + e.getMessage());
+        }
     }
 
     // heper method

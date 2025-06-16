@@ -85,41 +85,41 @@ public class UserRoleController {
                 .build();
     }
 
-    @Operation(
-            summary = "Assign role to user",
-            description = "Assigns a specific role to a user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Role assigned successfully"
-                    )
-            }
-    )
-    @PostMapping("/assign")
-    public FlowXResponse<Void> assignRoleToUser(@RequestBody UserRoleCreateRequest userRoleCreateRequest) {
-        userRoleService.assignRoleToUser(userRoleCreateRequest);
-        return FlowXResponse.<Void>builder()
-                .message("Role assigned successfully")
-                .code(200)
-                .build();
-    }
-
-    @Operation(
-            summary = "Delete role from user",
-            description = "Deletes a specific role from a user.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Role deleted successfully"
-                    )
-            }
-    )
-    @DeleteMapping("/delete/{id}")
-    public FlowXResponse<Void> deleteRoleFromUser(@PathVariable Long id) {
-        userRoleService.deleteUserRole(id);
-        return FlowXResponse.<Void>builder()
-                .message("Role deleted successfully")
-                .code(200)
-                .build();
-    }
+//    @Operation(
+//            summary = "Assign role to user",
+//            description = "Assigns a specific role to a user.",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            description = "Role assigned successfully"
+//                    )
+//            }
+//    )
+//    @PostMapping("/assign")
+//    public FlowXResponse<Void> assignRoleToUser(@RequestBody UserRoleCreateRequest userRoleCreateRequest) {
+//        userRoleService.assignRoleToUser(userRoleCreateRequest);
+//        return FlowXResponse.<Void>builder()
+//                .message("Role assigned successfully")
+//                .code(200)
+//                .build();
+//    }
+//
+//    @Operation(
+//            summary = "Delete role from user",
+//            description = "Deletes a specific role from a user.",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            description = "Role deleted successfully"
+//                    )
+//            }
+//    )
+//    @DeleteMapping("/delete/{id}")
+//    public FlowXResponse<Void> deleteRoleFromUser(@PathVariable Long id) {
+//        userRoleService.deleteUserRole(id);
+//        return FlowXResponse.<Void>builder()
+//                .message("Role deleted successfully")
+//                .code(200)
+//                .build();
+//    }
 }

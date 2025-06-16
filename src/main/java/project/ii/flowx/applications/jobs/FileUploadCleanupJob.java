@@ -26,43 +26,6 @@ public class FileUploadCleanupJob {
     FileService fileService;
     MinioService minioService;
 
-    // Chạy mỗi 2 phút
-    @Scheduled(fixedRate = 120000)
-    public void processUploadingFiles() {
-        log.info("Starting file upload cleanup job at {}", LocalDateTime.now());
-        List<File> uploadingFiles = fileService.findFilesByStatus(FileStatus.PROCESSING);
-
-        for (File file : uploadingFiles) {
-            try {
-                // Check xem file có tồn tại trong MinIO không
-                if (minioService.objectExists(file.getObjectKey())) {
-                    // File đã upload thành công
-                    StatObjectResponse objectInfo = minioService.getObjectInfo(file.getObjectKey());
-
-                    file.setActualSize(objectInfo.size());
-                    // Use the new method that publishes events for hasFile flag sync
-                    fileService.markFileAsUploaded(file);
-
-                    log.info("File upload completed with event published: {}", file.getId());
-
-                } else {
-                    log.info("file {} is still processing, checking for timeout...", file.getId());
-                    // Check timeout (2 giờ)
-                    if (file.getCreatedAt().isBefore(LocalDateTime.now().minusHours(1))) {
-
-                        file.setFileStatus(FileStatus.FAILED);
-                        fileService.update(file);
-
-                        log.warn("File upload timeout: {}", file.getId());
-                    }
-                }
-
-            } catch (Exception e) {
-                log.error("Error processing file {}: {}", file.getId(), e.getMessage());
-            }
-        }
-    }
-
     // Cleanup failed uploads (chạy mỗi giờ)
     @Scheduled(fixedRate = 3600000)
     public void cleanupFailedUploads() {
@@ -76,6 +39,7 @@ public class FileUploadCleanupJob {
                 if (minioService.objectExists(file.getObjectKey())) minioService.removeObject(file);
                 // Xóa record khỏi database
                 fileService.deleteFile(file.getId());
+                // Send notification to the user
 
                 log.info("Cleaned up failed upload: {}", file.getId());
             } catch (Exception e) {
