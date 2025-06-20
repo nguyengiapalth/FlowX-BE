@@ -8,11 +8,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.auth.UserRoleService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.userrole.UserRoleCreateRequest;
 import project.ii.flowx.model.dto.userrole.UserRoleResponse;
+import project.ii.flowx.security.UserPrincipal;
 
 import java.util.List;
 
@@ -77,9 +79,12 @@ public class UserRoleController {
             }
     )
     public FlowXResponse<List<UserRoleResponse>> getMyRoles() {
+        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long userId = userPrincipal.getId();
+
         log.info("Fetching roles for the current user");
         return FlowXResponse.<List<UserRoleResponse>>builder()
-                .data(userRoleService.getMyRoles())
+                .data(userRoleService.getRolesForUser(userId))
                 .message("My roles retrieved successfully")
                 .code(200)
                 .build();

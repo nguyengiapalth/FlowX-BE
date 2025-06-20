@@ -27,7 +27,9 @@ public class OpenAPIConfig {
                         .contact(new Contact()
                                 .name("Nguyen Khac Giap")
                                 .url("https://example.com")
-                                .email("nguyengiapnf5@gmail.com")))
+                                .email("nguyengiapnf5@gmail.com")
+                        )
+                )
                 .servers(Arrays.asList(
                         new Server()
                                 .url("http://localhost:3001")
@@ -36,7 +38,8 @@ public class OpenAPIConfig {
                         new Server()
                                 .url("https://api.example.com")
                                 .description("Server production")
-                ))
+                        )
+                )
                 .components(new Components()
                         // Bearer token auth
                         .addSecuritySchemes("bearerAuth",
@@ -44,7 +47,10 @@ public class OpenAPIConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("JWT token authentication")))
+                                        .description("JWT token authentication")
+                        )
+
+                )
 
                 ;
     }

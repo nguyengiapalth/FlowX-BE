@@ -138,8 +138,14 @@ public class ContentController {
     )
     @GetMapping("/get-all")
     public FlowXResponse<List<ContentResponse>> getAllContents() {
+        log.info("Retrieving all contents");
+        // Fetch all contents and filter them based on user access rights
+        List<ContentResponse> contents = contentService.getAllContents();
+        log.info("Total contents retrieved: {}", contents.size());
+        // Filter contents to only include those accessible by the user
+
         return FlowXResponse.<List<ContentResponse>>builder()
-                .data(contentService.getAllContents())
+                .data(contentService.filterAccessibleContents(contents))
                 .message("List of contents retrieved successfully")
                 .code(200)
                 .build();

@@ -51,18 +51,6 @@ public class DepartmentService {
         return departmentMapper.toDepartmentResponse(departmentRepository.save(department));
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
-    @Transactional
-    public DepartmentResponse updateDepartmentBackground(Long id, String background) {
-        Department department = departmentRepository.findById(id)
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
-
-        department.setBackground(background);
-        DepartmentResponse response = departmentMapper.toDepartmentResponse(departmentRepository.save(department));
-        
-        return response;
-    }
-
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     @Transactional
     public DepartmentResponse updateManager(Long id, Long newManagerId) {

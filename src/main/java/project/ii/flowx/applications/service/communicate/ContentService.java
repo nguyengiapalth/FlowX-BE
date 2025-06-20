@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -170,33 +171,31 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
+//    @Cacheable(value = "contents", key = "'allContents'", unless = "#result == null || #result.isEmpty()")
     @PreAuthorize( "isAuthenticated()")
     public List<ContentResponse> getAllContents() {
         List<Content> contents = contentRepository.findAll();
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        // Filter out contents that the user cannot access
-        responses = filterAccessibleContents(responses);
         return populateFilesList(responses);
+        // todo: pagination, graphql and personalized with microservice
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#targetId, #contentTargetType)")
+//    @Cacheable(value = "contents", key = "'contentsByTargetTypeAndId:' + #contentTargetType + ':' + #targetId", unless = "#result == null || #result.isEmpty()")
     public List<ContentResponse> getContentsByTargetTypeAndId(ContentTargetType contentTargetType, Long targetId) {
         List<Content> contents = contentRepository.findByContentTargetTypeAndTargetIdOrderByCreatedAtDesc(contentTargetType, targetId);
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        // Filter out contents that the user cannot access
-        responses = filterAccessibleContents(responses);
         return populateFilesList(responses);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
+//    @Cacheable(value = "contents", key = "'contentsByUser:' + #userId", unless = "#result == null || #result.isEmpty()")
     public List<ContentResponse> getContentsByUser(Long userId) {
         User user = entityLookupService.getUserById(userId);
         List<Content> contents = contentRepository.findByAuthorOrderByCreatedAtDesc(user);
         List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        // Filter out contents that the user cannot access
-        responses = filterAccessibleContents(responses);
         return populateFilesList(responses);
     }
 
@@ -278,7 +277,7 @@ public class ContentService {
                 .toList();
     }
 
-    private List<ContentResponse> filterAccessibleContents(List<ContentResponse> contents) {
+    public List<ContentResponse> filterAccessibleContents(List<ContentResponse> contents) {
         return contents.stream()
                 .filter(content -> authorizationService.canAccessContent(content.getId()))
                 .collect(Collectors.toList());

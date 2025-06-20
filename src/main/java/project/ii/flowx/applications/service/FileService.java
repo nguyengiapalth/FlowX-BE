@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import io.minio.StatObjectResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -39,6 +42,7 @@ public class FileService {
     MinioService minioService;
     EntityLookupService entityLookupService;
     ApplicationEventPublisher eventPublisher;
+    CacheManager cacheManager;
 
     public PresignedUploadResponse getPresignedUploadUrl(FileCreateRequest createRequest) {
         try {
@@ -54,6 +58,9 @@ public class FileService {
             file.setObjectKey(presignedUrl.getObjectKey());
             file.setBucket(presignedUrl.getBucket());
             fileRepository.save(file);
+
+            // Clear cache for files associated with the entity
+//            Objects.requireNonNull(cacheManager.getCache("files")).evict(createRequest.getFileTargetType() + "-" + createRequest.getTargetId());
 
             return PresignedUploadResponse.builder()
                     .url(presignedUrl.getUrl())
@@ -78,11 +85,6 @@ public class FileService {
     }
 
     @Transactional
-    public void update(File file) {
-        fileRepository.save(file);
-    }
-
-    @Transactional
     public void deleteFile(Long fileId) {
         try {
             File file = getFileById(fileId);
@@ -93,6 +95,8 @@ public class FileService {
 
             minioService.removeObject(file);
             fileRepository.delete(file);
+            // Clear cache for files associated with the entity
+            Objects.requireNonNull(cacheManager.getCache("files")).evict(file.getFileTargetType() + "-" + entityId);
 
             // Publish file deleted event to trigger hasFile flag sync
             eventPublisher.publishEvent(new FileEvent.FileDeletedEvent(
@@ -112,48 +116,22 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    public FileResponse getFileInfo(Long fileId) {
-        File file = getFileById(fileId);
-        return fileMapper.toFileResponse(file);
-    }
-
-    @Transactional(readOnly = true)
+    @Cacheable(value = "files", key = "#fileTargetType + '-' + #entityId")
     public List<FileResponse> getFilesByEntity(FileTargetType fileTargetType, Long entityId) {
         List<File> files = fileRepository.findByTargetIdAndFileTargetType(entityId, fileTargetType);
         return fileMapper.toFileResponseList(files);
     }
 
-    @Transactional(readOnly = true)
-    public List<FileResponse> getMyFiles() {
-        Long userId = getCurrentUserId();
-        List<File> files = fileRepository.findByUploaderId(userId);
-        List<FileResponse> fileResponses = fileMapper.toFileResponseList(files);
-        // if type is image, video, .., set thumbnailUrl
-        for (FileResponse fileResponse : fileResponses) {
-            if (fileResponse.getType().startsWith("image/") || fileResponse.getType().startsWith("video/")) {
-                // get file by id
-                File file = files.stream()
-                        .filter(f -> f.getId().equals(fileResponse.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "File not found"));
-                String url = minioService.getPresignedDownloadUrl(file, 3600 * 24); // 1 day expiry
-                fileResponse.setUrl(url);
-            }
-        }
-        return fileResponses;
-    }
-
-    @Transactional(readOnly = true)
-    public List<File> findFilesByStatus(FileStatus status) {
-        return fileRepository.findByFileStatus(status);
-    }
-
+    /**
+     * Find files by status and created before a certain date
+     * Used for cleanup jobs to find files that failed to upload
+     * No implement caching here as this is a cleanup operation
+     */
     @Transactional(readOnly = true)
     public List<File> findByStatusAndCreatedAtBefore(FileStatus fileStatus, LocalDateTime cutoff) {
         if (fileStatus == null || cutoff == null) {
             throw new FlowXException(FlowXError.BAD_REQUEST, "File status and cutoff date must be provided");
         }
-
         return fileRepository.findByFileStatusAndCreatedAtBefore(fileStatus, cutoff);
     }
 
@@ -219,7 +197,7 @@ public class FileService {
         }
     }
 
-    // heper method
+    // helper method
     private File getFileById(Long fileId) {
         return fileRepository.findById(fileId)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "File not found"));

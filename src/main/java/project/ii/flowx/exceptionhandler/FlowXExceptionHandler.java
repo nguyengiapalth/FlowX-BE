@@ -1,7 +1,5 @@
 package project.ii.flowx.exceptionhandler;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,8 +44,8 @@ public class FlowXExceptionHandler {
                         .build());
     }
 
-    @ExceptionHandler(value = TokenExpiredException.class)
-    ResponseEntity<FlowXResponse> handlingTokenExpiredException(TokenExpiredException exception) {
+    @ExceptionHandler(value = JwtException.class)
+    ResponseEntity<FlowXResponse> handlingTokenExpiredException(JwtException exception) {
         log.error("Token expired: {}", exception.getMessage());
         FlowXError errorCode = FlowXError.TOKEN_EXPIRED;
         return ResponseEntity.status(errorCode.getStatusCode())
@@ -57,17 +55,5 @@ public class FlowXExceptionHandler {
                         .build());
     }
 
-    @ExceptionHandler(value = JWTVerificationException.class)
-    ResponseEntity<FlowXResponse> handlingJWTVerificationException(JWTVerificationException exception) {
-        log.error("JWT verification failed: {}", exception.getMessage());
-        FlowXError errorCode = FlowXError.INVALID_TOKEN;
-        return ResponseEntity.status(errorCode.getStatusCode())
-                .body(FlowXResponse.builder()
-                        .code(errorCode.getCode())
-                        .message("Invalid token")
-                        .build());
-    }
-
-//    @ExceptionHandler(value = JwtException.class)
 
 }

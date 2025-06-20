@@ -117,11 +117,11 @@ public class AuthorizationService {
     }
 
     public boolean canCreateTask(Long targetId, ContentTargetType targetType) {
-        if (targetType == ContentTargetType.GLOBAL) return false;
+        if (targetType == ContentTargetType.GLOBAL) return isGlobalManager();
         if (targetType == ContentTargetType.DEPARTMENT)
-            return hasDepartmentRole("MEMBER", targetId) || hasDepartmentRole("MANAGER", targetId);
+            return hasDepartmentRole("MANAGER", targetId);
         if (targetType == ContentTargetType.PROJECT)
-            return hasProjectRole("MEMBER", targetId) || hasProjectRole("MANAGER", targetId);
+            return hasProjectRole("MANAGER", targetId);
         return false; // No access for other types
     }
 

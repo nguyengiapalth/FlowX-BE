@@ -32,8 +32,6 @@ public class ProjectEventHandler {
     public void handleProjectCreatedEvent(ProjectEvent.ProjectCreatedEvent event) {
         log.info("Project created: {}", event);
         // send socket event to user
-
-        // Optionally, send a notification about the project creation
         // NotificationCreateRequest notificationCreateRequest = ...
         // notificationService.createNotification(notificationCreateRequest);
 
@@ -41,14 +39,13 @@ public class ProjectEventHandler {
 
     @EventListener
     public void handleProjectUpdatedEvent(ProjectEvent.ProjectUpdatedEvent event) {
+        log.info("Project updated with ID: {}", event.projectId());
         // Handle project update logic here
-        System.out.println("Project updated with ID: " + event.projectId());
     }
 
     @EventListener
     public void handleProjectDeletedEvent(ProjectEvent.ProjectDeletedEvent event) {
-        // Handle project deletion logic here
-        System.out.println("Project deleted with ID: " + event.projectId());
+        log.info("Project deleted with ID: {}", event.projectId());
         userRoleService.deleteUserRolesByScope(RoleScope.PROJECT ,event.projectId());
     }
 

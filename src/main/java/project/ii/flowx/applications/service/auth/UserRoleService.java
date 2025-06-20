@@ -4,8 +4,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -18,7 +19,6 @@ import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.repository.UserRoleRepository;
 import project.ii.flowx.model.mapper.UserRoleMapper;
-import project.ii.flowx.security.UserPrincipal;
 import project.ii.flowx.shared.enums.RoleScope;
 
 import java.util.List;
@@ -33,17 +33,8 @@ public class UserRoleService {
     EntityLookupService entityLookupService;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "userRoles", key = "#userId")
     public List<UserRoleResponse> getRolesForUser(Long userId) {
-        List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-        return userRoleMapper.toUserRoleResponseList(userRoles);
-    }
-
-    @Transactional(readOnly = true)
-    @PreAuthorize("isAuthenticated()")
-    public List<UserRoleResponse> getMyRoles() {
-        UserPrincipal userPrincipal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Long userId = userPrincipal.getId();
-
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
@@ -92,11 +83,13 @@ public class UserRoleService {
     }
 
     @Transactional
+    @CacheEvict(value = "userRoles", key = "#userId")
     public void deleteUserRoleByUserIdAndRoleIdAndScope(Long userId, Long roleId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndRoleIdAndScopeAndScopeId(userId, roleId, roleScope, scopeId);
     }
 
     @Transactional
+    @CacheEvict(value = "userRoles", key = "#userId")
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
     public void deleteUserRolesByUserIdAndScope(Long userId, RoleScope roleScope, Long scopeId) {
         userRoleRepository.deleteByUserIdAndScopeAndScopeId(userId, roleScope, scopeId);
@@ -104,8 +97,8 @@ public class UserRoleService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ROLE_MANAGER', 'ROLE_HR')")
+    @CacheEvict(value = "userRoles")
     public void deleteUserRolesByScope(RoleScope roleScope, long scopeId) {
         userRoleRepository.deleteByScopeAndScopeId(roleScope, scopeId);
     }
-
 }

@@ -158,15 +158,11 @@
 
         <!-- JWT Support -->
         <dependency>
-            <groupId>com.auth0</groupId>
-            <artifactId>java-jwt</artifactId>
-            <version>4.4.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-jose</artifactId>
             <version>6.2.2</version> <!-- hoặc phiên bản bạn đang dùng -->
         </dependency>
+
     </dependencies>
 
     <build>

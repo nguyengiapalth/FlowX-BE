@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,11 +29,13 @@ import java.util.List;
 public class ApplicationInit {
     PasswordEncoder passwordEncoder;
 
+    @Value("${app.admin.email:nguyengiapnf5@gmail.com}")
     @NonFinal
-    static final String ADMIN_EMAIL = "nguyengiapnf5@gmail.com";
+    String adminEmail;
 
+    @Value("${app.admin.password:admin}")
     @NonFinal
-    static final String ADMIN_PASSWORD = "admin";
+    String adminPassword;
 
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository, UserRoleRepository userRoleRepository) {
@@ -42,31 +45,22 @@ public class ApplicationInit {
                 log.info("Creating default roles...");
                 roleRepository.saveAllAndFlush(List.of(
                         Role.builder().name(String.valueOf(RoleDefault.MANAGER)).build(),
-                        Role.builder().name(String.valueOf(RoleDefault.HR)).build(),
                         Role.builder().name(String.valueOf(RoleDefault.MEMBER)).build(),
                         Role.builder().name(String.valueOf(RoleDefault.USER)).build()
                 ));
                 log.info("Default roles created");
             }
-            if (userRepository.findByEmail(ADMIN_EMAIL).isEmpty()) {
-                log.warn("admin user has been created with default password: admin, please change it");
+            if (userRepository.findByEmail(adminEmail).isEmpty()) {
+                log.warn("Admin user has been created with default credentials. Please change them immediately!");
                 User adminUser = User.builder()
-                        .email(ADMIN_EMAIL)
-                        .password(passwordEncoder.encode(ADMIN_PASSWORD))
+                        .email(adminEmail)
+                        .password(passwordEncoder.encode(adminPassword))
                         .fullName("Nguyen Khac Giap")
                         .phoneNumber("0987654321")
                         .dateOfBirth(LocalDate.parse("2004-05-19"))
                         .address("Ha Noi")
                         .build();
                 userRepository.save(adminUser);
-
-                userRoleRepository.save(UserRole.builder()
-                        .user(adminUser)
-                        .role(roleRepository.findByName(String.valueOf(RoleDefault.HR))
-                                .orElseThrow(() -> new RuntimeException("Role not found")))
-                        .scope(RoleScope.GLOBAL)
-                        .scopeId(0L)
-                        .build());
 
                 userRoleRepository.save(UserRole.builder()
                         .user(adminUser)
@@ -84,8 +78,10 @@ public class ApplicationInit {
                         .scopeId(0L)
                         .build());
 
-                log.info("Admin user created with email: {}", ADMIN_EMAIL);
-                log.info("Admin user password: {}, please change it", ADMIN_PASSWORD);
+                log.info("Admin user created with email: {}", adminEmail);
+                if ("admin".equals(adminPassword)) {
+                    log.warn("WARNING: Default admin password is being used! Please change it immediately for security!");
+                }
             }
             log.info("Application initialization completed .....");
         };

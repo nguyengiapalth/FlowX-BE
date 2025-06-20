@@ -26,3 +26,5 @@ public class NotificationResponse {
     LocalDateTime createdAt;
     LocalDateTime readAt;
 }
+
+/// ? Use response like a trigger to polling data

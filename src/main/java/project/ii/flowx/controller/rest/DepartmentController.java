@@ -108,34 +108,6 @@ public class DepartmentController {
                 .build();
     }
 
-
-    @Operation(
-            summary = "Update department background",
-            description = "Updates the background image of a department.",
-            parameters = {
-                    @Parameter(name = "id", description = "ID of the department to be updated")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Department background updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Department not found"
-                    )
-            }
-    )
-    @PutMapping("/update-background/{id}")
-    public FlowXResponse<DepartmentResponse> updateDepartmentBackground(@PathVariable Long id, @RequestBody String background) {
-        background = background.substring(1, background.length() - 1);
-        return FlowXResponse.<DepartmentResponse>builder()
-                .data(departmentService.updateDepartmentBackground(id, background))
-                .message("Department background updated successfully")
-                .code(200)
-                .build();
-    }
-
     @Operation(
             summary = "Delete a department",
             description = "Deletes a department from the system.",

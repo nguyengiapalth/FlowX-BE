@@ -1,4 +1,4 @@
-package project.ii.flowx.config;
+package project.ii.flowx.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +15,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
-import project.ii.flowx.security.UserPrincipal;
-import project.ii.flowx.security.UserDetailsServiceImpl;
 
 @Component
 @RequiredArgsConstructor

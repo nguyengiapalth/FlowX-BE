@@ -70,7 +70,7 @@ public class ProjectMemberService {
         ProjectMember projectMember = projectMemberRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Không tìm thấy project member với ID: " + id));
         // Kiểm tra xem role có hợp lệ không
-        if (role == null || role == RoleDefault.USER || role == RoleDefault.HR)
+        if (role == null || role == RoleDefault.USER)
             throw new FlowXException(FlowXError.BAD_REQUEST,
                     "Role không hợp lệ. Chỉ có thể cập nhật thành viên với role MANAGER hoặc MEMBER.");
 
@@ -147,7 +147,23 @@ public class ProjectMemberService {
     // Helper methods
     private void validateStatusTransition(MemberStatus currentStatus, MemberStatus newStatus) {
         // Implement business logic for valid status transitions
-        if (currentStatus == MemberStatus.INACTIVE && newStatus == MemberStatus.ACTIVE) {}
-        // TODO:
+        if (currentStatus == newStatus) {
+            throw new FlowXException(FlowXError.BAD_REQUEST, 
+                "Trạng thái mới phải khác với trạng thái hiện tại");
+        }
+        
+        // Define valid transitions based on business rules
+        boolean isValidTransition = switch (currentStatus) {
+            case ACTIVE -> newStatus == MemberStatus.INACTIVE || newStatus == MemberStatus.BLOCKED;
+            case INACTIVE -> newStatus == MemberStatus.ACTIVE || newStatus == MemberStatus.DELETED;
+            case PENDING -> newStatus == MemberStatus.ACTIVE || newStatus == MemberStatus.INACTIVE;
+            case BLOCKED -> newStatus == MemberStatus.ACTIVE || newStatus == MemberStatus.DELETED;
+            case DELETED -> false; // Cannot transition from DELETED status
+        };
+        
+        if (!isValidTransition) {
+            throw new FlowXException(FlowXError.BAD_REQUEST, 
+                String.format("Không thể chuyển từ trạng thái %s sang %s", currentStatus, newStatus));
+        }
     }
 }
