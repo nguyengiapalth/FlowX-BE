@@ -254,30 +254,4 @@ public class ProjectController {
                 .build();
     }
 
-    @Operation(
-            summary = "Update project background",
-            description = "Updates the background image of a project.",
-            parameters = {
-                    @Parameter(name = "id", description = "ID of the project to be updated")
-            },
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Project background updated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "Project not found"
-                    )
-            }
-    )
-    @PutMapping("/update-background/{id}")
-    public FlowXResponse<ProjectResponse> updateProjectBackground(@PathVariable Long id, @RequestBody String background) {
-        background = background.substring(1, background.length() - 1);
-        return FlowXResponse.<ProjectResponse>builder()
-                .data(projectService.updateProjectBackground(id, background))
-                .message("Project background updated successfully")
-                .code(200)
-                .build();
-    }
 }

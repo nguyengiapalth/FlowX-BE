@@ -39,7 +39,12 @@ public class UserRoleService {
     @Cacheable(value = "roles", key = "#userId", unless = "#result == null || #result.isEmpty()")
     public List<UserRoleResponse> getRolesForUser(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-
+        // make user = null
+        userRoles.forEach(userRole -> {
+            if (userRole.getUser() != null) {
+                userRole.setUser(null);
+            }
+        });
         log.info("getRolesForUser {} roles {} in user role service, not in cache", userId, userRoles);
         return userRoleMapper.toUserRoleResponseList(userRoles);
     }
