@@ -14,10 +14,12 @@ import java.util.List;
  * Mapper interface for converting between Task entity and Task DTOs.
  * This interface uses MapStruct to generate the implementation at compile time.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface TaskMapper {
 
     @Mapping(target = "files", ignore = true)
+    @Mapping(target = "assigner", source = "assigner")
+    @Mapping(target = "assignee", source = "assignee")
     TaskResponse toTaskResponse(Task task);
 
     @Mapping(target = "assigner.id", source = "assignerId")

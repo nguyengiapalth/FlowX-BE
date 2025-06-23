@@ -12,9 +12,10 @@ import java.util.List;
  * Mapper interface for converting between ProjectMember entity and ProjectMember DTOs.
  * This interface uses MapStruct to generate the implementation at compile time.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface ProjectMemberMapper {
 
+    @Mapping(target = "user", source = "user")
     ProjectMemberResponse toProjectMemberResponse(ProjectMember projectMember);
 
     @Mapping(target = "project.id", source = "projectId")

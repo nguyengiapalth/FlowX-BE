@@ -7,6 +7,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
@@ -27,6 +28,7 @@ import java.util.Set;
 public class UserPresenceController {
     private final UserPresenceService presenceService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final SimpUserRegistry simpUserRegistry;
     
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -105,7 +107,7 @@ public class UserPresenceController {
                 
                 Set<String> onlineUsers = presenceService.getOnlineUsers();
                 messagingTemplate.convertAndSendToUser(
-                    userId.toString(),
+                    principal.getName(),
                     "/queue/online-users",
                     onlineUsers
                 );

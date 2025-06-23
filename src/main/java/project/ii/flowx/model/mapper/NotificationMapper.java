@@ -13,7 +13,7 @@ import java.util.List;
  * Mapper interface for converting between Notification entity and Notification DTOs.
  * This interface uses MapStruct to generate the implementation at compile time.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = UserMapper.class)
 public interface NotificationMapper {
 
     NotificationResponse toNotificationResponse(Notification notification);
