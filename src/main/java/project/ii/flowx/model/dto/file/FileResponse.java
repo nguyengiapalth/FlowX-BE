@@ -22,7 +22,6 @@ public class FileResponse {
     String name;
     String type;
     Long size;
-    String objectKey;
     String contentHash;
     Long targetId;
     String description;
