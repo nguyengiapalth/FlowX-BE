@@ -19,6 +19,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+/**
+ * FlowXJwtDecoder is a custom JWT decoder that validates JWT tokens using a secret key.
+ * It checks for token expiration, issuer validation, and invalidated tokens.
+ * This decoder is used to decode and validate JWT tokens in the application.
+ */
 @Component
 public class FlowXJwtDecoder implements JwtDecoder {
     @Value("${spring.jwt.secret}")

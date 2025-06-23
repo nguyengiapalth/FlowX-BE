@@ -9,13 +9,17 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import project.ii.flowx.applications.service.communicate.ContentService;
 import project.ii.flowx.model.dto.FlowXResponse;
 import project.ii.flowx.model.dto.content.ContentCreateRequest;
 import project.ii.flowx.model.dto.content.ContentResponse;
 import project.ii.flowx.model.dto.content.ContentUpdateRequest;
 import project.ii.flowx.shared.enums.ContentTargetType;
+import org.springframework.cache.CacheManager;
 
 import java.util.List;
 
@@ -139,13 +143,8 @@ public class ContentController {
     @GetMapping("/get-all")
     public FlowXResponse<List<ContentResponse>> getAllContents() {
         log.info("Retrieving all contents");
-        // Fetch all contents and filter them based on user access rights
-        List<ContentResponse> contents = contentService.getAllContents();
-        log.info("Total contents retrieved: {}", contents.size());
-        // Filter contents to only include those accessible by the user
-
         return FlowXResponse.<List<ContentResponse>>builder()
-                .data(contentService.filterAccessibleContents(contents))
+                .data(contentService.filterAndPopulateFiles(contentService.getAllContents()))
                 .message("List of contents retrieved successfully")
                 .code(200)
                 .build();
@@ -166,7 +165,8 @@ public class ContentController {
             @PathVariable ContentTargetType contentTargetType,
             @PathVariable Long targetId) {
         return FlowXResponse.<List<ContentResponse>>builder()
-                .data(contentService.getContentsByTargetTypeAndId(contentTargetType, targetId))
+                .data(
+                        contentService.filterAndPopulateFiles(contentService.getContentsByTargetTypeAndId(contentTargetType, targetId)))
                 .message("List of target contents retrieved successfully")
                 .code(200)
                 .build();
@@ -209,5 +209,4 @@ public class ContentController {
                 .code(200)
                 .build();
     }
-
 }

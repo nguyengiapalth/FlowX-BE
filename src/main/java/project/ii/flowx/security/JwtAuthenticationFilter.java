@@ -26,6 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Custom JWT authentication filter that validates JWT tokens and sets the authentication in the security context.
+ * It handles token expiration and invalid tokens by returning appropriate JSON responses.
+ * This filter is applied to incoming HTTP requests to secure endpoints.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -87,8 +92,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
-
-
 
     private void handleTokenExpired(HttpServletResponse response) throws IOException {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

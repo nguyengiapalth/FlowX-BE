@@ -68,9 +68,6 @@ public class AuthenticationService {
     @Transactional(readOnly = true)
     public AuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         try {
-            User user = userRepository.findByEmail(authenticationRequest.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             authenticationRequest.getEmail(),
@@ -90,8 +87,6 @@ public class AuthenticationService {
             return new AuthenticationResult(response, refreshToken);
         } catch (BadCredentialsException e) {
             throw new FlowXException(FlowXError.INVALID_PASSWORD, "Invalid password");
-        } catch (AuthenticationException e) {
-            throw e;
         }
     }
 
@@ -142,15 +137,9 @@ public class AuthenticationService {
             // Check if token is invalidated
             if (invalidTokenRepository.existsByToken(refreshTokenString)) {
                 log.warn("Refresh token is already invalidated");
-                throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token is invalidated");
+                throw new FlowXException(FlowXError.INVALID_TOKEN, "Refresh token is invalidated");
             }
-
-            // Extract user information from refresh token
-            Long userId = jwt.getClaim("userId");
             String email = jwt.getSubject();
-            String scope = jwt.getClaim("scope");
-            
-            log.info("Refreshing token for user: {} (ID: {})", email, userId);
 
             // Load user details
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
@@ -174,7 +163,7 @@ public class AuthenticationService {
 
         } catch (JwtException e) {
             log.error("JWT verification failed during refresh: {}", e.getMessage());
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "Invalid refresh token");
+            throw new FlowXException(FlowXError.INVALID_TOKEN, "Invalid refresh token");
         } catch (FlowXException e) {
             // Re-throw FlowXException as-is
             throw e;
@@ -219,5 +208,4 @@ public class AuthenticationService {
             throw new RuntimeException("Failed to generate JWT token", e);
         }
     }
-
 }

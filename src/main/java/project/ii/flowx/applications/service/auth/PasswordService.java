@@ -23,6 +23,11 @@ import project.ii.flowx.security.UserPrincipal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Service for handling password-related operations such as resetting and changing passwords.
+ * It includes methods to send password reset emails, reset passwords using tokens,
+ * and change the user's password.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

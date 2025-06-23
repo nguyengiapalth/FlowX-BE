@@ -117,7 +117,7 @@ public class AuthenticationController {
                     .build();
 
         } catch (Exception e) {
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "Google authentication failed: " + e.getMessage());
+            throw new FlowXException(FlowXError.INVALID_CREDENTIALS, "Google authentication failed: " + e.getMessage());
         }
     }
 
@@ -146,7 +146,7 @@ public class AuthenticationController {
             
             if (refreshToken == null) {
                 log.warn("No refresh token found in cookies");
-                throw new FlowXException(FlowXError.UNAUTHORIZED, "Refresh token not found");
+                throw new FlowXException(FlowXError.UNAUTHENTICATED, "Refresh token not found");
             }
             
             log.info("Found refresh token in cookie, processing...");
@@ -195,7 +195,7 @@ public class AuthenticationController {
         passwordService.sendPasswordResetEmail(request);
         return FlowXResponse.<Void>builder()
                 .code(200)
-                .message("Nếu email tồn tại trong hệ thống, một email đặt lại mật khẩu đã được gửi")
+                .message("Reset password email sent successfully")
                 .build();
     }
 
@@ -218,7 +218,7 @@ public class AuthenticationController {
         passwordService.resetPassword(request);
         return FlowXResponse.<Void>builder()
                 .code(200)
-                .message("Mật khẩu đã được đặt lại thành công")
+                .message("Password reset successfully")
                 .build();
     }
 

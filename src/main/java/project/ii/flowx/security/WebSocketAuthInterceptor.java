@@ -16,6 +16,12 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
+/**
+ * Interceptor for WebSocket connections that authenticates users based on JWT tokens.
+ * It extracts the JWT from the STOMP headers, decodes it, and sets the user in the security context.
+ * Why custom interceptor?
+ * Socket connections do not go through the standard HTTP security filters, dont have bearer token in the request header.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

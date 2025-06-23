@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
+import project.ii.flowx.model.dto.PageResponse;
 import project.ii.flowx.model.entity.Notification;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.dto.notification.NotificationResponse;
@@ -90,18 +91,20 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-    public Page<NotificationResponse> getMyNotifications(int page) {
+    public PageResponse<NotificationResponse> getMyNotifications(int page) {
         Long currentUserId = getUserId();
 
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 20);
         Page<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(currentUserId,pageable );
-        return notifications.map(notificationMapper::toNotificationResponse);
+        Page<NotificationResponse> responsePage = notifications.map(notificationMapper::toNotificationResponse);
+
+        return new PageResponse<>(responsePage);
     }
 
     private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");
+            throw new FlowXException(FlowXError.UNAUTHENTICATED, "No authenticated user found");
 
         UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
         return userPrincipal.getId();

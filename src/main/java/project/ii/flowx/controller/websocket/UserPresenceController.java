@@ -17,6 +17,10 @@ import project.ii.flowx.security.UserPrincipal;
 import java.security.Principal;
 import java.util.Set;
 
+/**
+ * Controller to manage user presence in WebSocket connections.
+ * Handles user connection, disconnection, and heartbeat events.
+ */
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -75,7 +79,7 @@ public class UserPresenceController {
         }
     }
     
-    // Heartbeat endpoint để keep user online
+    // Heartbeat endpoint to keep user presence alive
     @MessageMapping("/user.heartbeat")
     public void handleHeartbeat(Principal principal) {
         try {

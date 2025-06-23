@@ -15,6 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * UserPrincipal is a custom implementation of UserDetails that represents the authenticated user.
+ * It contains user information such as ID, email, password, and authorities (roles).
+ * This class is used by Spring Security to manage user authentication and authorization.
+ */
 @Slf4j
 public class UserPrincipal implements UserDetails {
     @Getter
@@ -58,13 +63,6 @@ public class UserPrincipal implements UserDetails {
 
         // Log the roles for debugging
         assert roles != null;
-        log.info("User {} has roles: {}",
-                user.getEmail(),
-                roles.stream().map(role -> role.getRole().getName()).collect(Collectors.joining(", ")));
-        // log the authority
-        log.info("User {} has authorities: {}",
-                user.getEmail(),
-                authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(", ")));
         return new UserPrincipal(
                 user.getId(),
                 user.getEmail(),

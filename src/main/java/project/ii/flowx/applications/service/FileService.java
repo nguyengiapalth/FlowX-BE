@@ -42,7 +42,7 @@ public class FileService {
     MinioService minioService;
     EntityLookupService entityLookupService;
     ApplicationEventPublisher eventPublisher;
-    CacheManager cacheManager;
+//    CacheManager cacheManager;
 
     public PresignedUploadResponse getPresignedUploadUrl(FileCreateRequest createRequest) {
         try {
@@ -59,8 +59,10 @@ public class FileService {
             file.setBucket(presignedUrl.getBucket());
             fileRepository.save(file);
 
-            // Clear cache for files associated with the entity
-//            Objects.requireNonNull(cacheManager.getCache("files")).evict(createRequest.getFileTargetType() + "-" + createRequest.getTargetId());
+            // Clear cache for files associated with the entity (new file will be added)
+//            String cacheKey = createRequest.getFileTargetType() + "-" + createRequest.getTargetId();
+//            Objects.requireNonNull(cacheManager.getCache(cacheKey)).evict(cacheKey);
+//            log.debug("Evicted files cache for key: {} due to new file upload", cacheKey);
 
             return PresignedUploadResponse.builder()
                     .url(presignedUrl.getUrl())
@@ -73,16 +75,16 @@ public class FileService {
         }
     }
 
-    public String getPresignedDownloadUrl(Long fileId) {
-        File file = getFileById(fileId);
-        try {
-            // Generate presigned URL for download
-            return minioService.getPresignedDownloadUrl(file, 3600);
-        } catch (Exception e) {
-            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
-                    "Failed to generate download URL: " + e.getMessage());
-        }
-    }
+//    public String getPresignedDownloadUrl(Long fileId) {
+//        File file = getFileById(fileId);
+//        try {
+//            // Generate presigned URL for download
+//            return minioService.getPresignedDownloadUrl(file, 3600);
+//        } catch (Exception e) {
+//            throw new FlowXException(FlowXError.INTERNAL_SERVER_ERROR,
+//                    "Failed to generate download URL: " + e.getMessage());
+//        }
+//    }
 
     @Transactional
     public void deleteFile(Long fileId) {
@@ -95,8 +97,11 @@ public class FileService {
 
             minioService.removeObject(file);
             fileRepository.delete(file);
+            
             // Clear cache for files associated with the entity
-            Objects.requireNonNull(cacheManager.getCache("files")).evict(file.getFileTargetType() + "-" + entityId);
+//            String cacheKey = file.getFileTargetType() + "-" + entityId;
+//            Objects.requireNonNull(cacheManager.getCache("files")).evict(cacheKey);
+//            log.debug("Evicted files cache for key: {}", cacheKey);
 
             // Publish file deleted event to trigger hasFile flag sync
             eventPublisher.publishEvent(new FileEvent.FileDeletedEvent(
@@ -116,9 +121,11 @@ public class FileService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "files", key = "#fileTargetType + '-' + #entityId")
+//    @Cacheable(value = "files", key = "#fileTargetType + '-' + #entityId",
+//               unless = "#result == null || #result.isEmpty()")
     public List<FileResponse> getFilesByEntity(FileTargetType fileTargetType, Long entityId) {
         List<File> files = fileRepository.findByTargetIdAndFileTargetType(entityId, fileTargetType);
+
         return fileMapper.toFileResponseList(files);
     }
 
@@ -206,7 +213,7 @@ public class FileService {
     private Long getCurrentUserId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "User not authenticated");
+            throw new FlowXException(FlowXError.UNAUTHENTICATED, "User not authenticated");
         }
         
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();

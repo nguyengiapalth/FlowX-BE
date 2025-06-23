@@ -9,6 +9,10 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import project.ii.flowx.security.WebSocketAuthInterceptor;
 
+/**
+ * Configuration class for WebSocket message broker.
+ * This class sets up the message broker and registers STOMP endpoints for WebSocket communication.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor

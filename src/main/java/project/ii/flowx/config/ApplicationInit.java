@@ -22,6 +22,11 @@ import project.ii.flowx.shared.enums.RoleScope;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Application initialization configuration.
+ * This class initializes default roles and an admin user if they do not exist when the application starts.
+ * It uses an ApplicationRunner to execute the initialization logic after the application context is loaded.
+ */
 @Configuration
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)

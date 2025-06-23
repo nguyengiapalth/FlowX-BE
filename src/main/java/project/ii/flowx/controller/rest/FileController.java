@@ -34,31 +34,31 @@ import java.util.Map;
 public class FileController {
     FileService fileService;
 
-    @Operation(
-            summary = "Get presigned download URL",
-            description = "Generates a presigned URL for downloading a file.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Presigned URL generated successfully"
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "File not found"
-                    )
-            }
-    )
-    @GetMapping("/file/presigned-download/{fileId}")
-    public FlowXResponse<String> getPresignedDownloadUrl(@PathVariable Long fileId) {
-        log.info("Generate presigned download URL request for file ID: {}", fileId);
-        String presignedUrl = fileService.getPresignedDownloadUrl(fileId);
-
-        return FlowXResponse.<String>builder()
-                .code(200)
-                .message("Presigned download URL generated successfully")
-                .data(presignedUrl)
-                .build();
-    }
+//    @Operation(
+//            summary = "Get presigned download URL",
+//            description = "Generates a presigned URL for downloading a file.",
+//            responses = {
+//                    @ApiResponse(
+//                            responseCode = "200",
+//                            description = "Presigned URL generated successfully"
+//                    ),
+//                    @ApiResponse(
+//                            responseCode = "404",
+//                            description = "File not found"
+//                    )
+//            }
+//    )
+//    @GetMapping("/file/presigned-download/{fileId}")
+//    public FlowXResponse<String> getPresignedDownloadUrl(@PathVariable Long fileId) {
+//        log.info("Generate presigned download URL request for file ID: {}", fileId);
+//        String presignedUrl = fileService.getPresignedDownloadUrl(fileId);
+//
+//        return FlowXResponse.<String>builder()
+//                .code(200)
+//                .message("Presigned download URL generated successfully")
+//                .data(presignedUrl)
+//                .build();
+//    }
 
     @Operation(
             summary = "Get presigned upload URL",

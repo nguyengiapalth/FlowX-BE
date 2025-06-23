@@ -6,10 +6,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuration class for Minio client.
+ * This class sets up the Minio client with the specified endpoint, access key, and secret key.
+ * It uses the MinioClient builder to create an instance of MinioClient.
+ */
 @Configuration
 @Slf4j
 public class MinioConfig {
-
     @Value("${minio.endpoint}")
     private String endpoint;
 

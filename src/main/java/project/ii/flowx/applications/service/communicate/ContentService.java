@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -12,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import project.ii.flowx.applications.events.ContentEvent;
-import project.ii.flowx.applications.events.FileEvent;
 import project.ii.flowx.applications.service.FileService;
 import project.ii.flowx.applications.service.auth.AuthorizationService;
 import project.ii.flowx.applications.service.helper.EntityLookupService;
@@ -46,6 +46,7 @@ public class ContentService {
     @Transactional
     @PreAuthorize("hasAuthority('ROLE_MANAGER') " +
             "or @authorize.canAccessScope(#request.targetId, #request.contentTargetType)")
+//    @CacheEvict(value = "contents", key = "'allContents'", condition = "#result != null")
     public ContentResponse createContent(ContentCreateRequest request) {
          Long userId = getUserId();
          User author = entityLookupService.getUserById(userId);
@@ -54,7 +55,7 @@ public class ContentService {
         if (request.getParentId() != -1 && request.getParentId() != 0) {
             Content parent = contentRepository.findById(request.getParentId())
                     .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Parent content not found"));
-            if(parent.getDepth() >= 3){
+            if(parent.getDepth() >= 2){
                 content.setDepth(parent.getDepth());
                 content.setParent(parent.getParent());
             }
@@ -114,6 +115,7 @@ public class ContentService {
     }
 
     @Transactional
+//    @CacheEvict(value = "contents", key = "'allContents'", condition = "#result != null")
     public void updateHasFileFlag(Long contentId, Long fileId) {
         // Update hasFile flag based on actual file count
         Content content = contentRepository.findById(contentId)
@@ -171,40 +173,38 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
-//    @Cacheable(value = "contents", key = "'allContents'", unless = "#result == null || #result.isEmpty()")
     @PreAuthorize( "isAuthenticated()")
+//    @Cacheable(value = "contents", key = "'allContents'", unless = "#result == null || #result.isEmpty()")
     public List<ContentResponse> getAllContents() {
-        List<Content> contents = contentRepository.findAll();
-        List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        return populateFilesList(responses);
-        // todo: pagination, graphql and personalized with microservice
+        List<Content> contents = contentRepository.findByDepthOrderByCreatedAtDesc(0);
+        log.info("Retrieved {} contents from database", contents);
+        log.info("Content IDs: {}", contents.stream().map(Content::getId).collect(Collectors.toList()));
+
+        return contentMapper.toContentResponseList(contents);
+        // todo: pagination, graphql and personalized with microservice, but not for this app
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessScope(#targetId, #contentTargetType)")
-//    @Cacheable(value = "contents", key = "'contentsByTargetTypeAndId:' + #contentTargetType + ':' + #targetId", unless = "#result == null || #result.isEmpty()")
     public List<ContentResponse> getContentsByTargetTypeAndId(ContentTargetType contentTargetType, Long targetId) {
         List<Content> contents = contentRepository.findByContentTargetTypeAndTargetIdOrderByCreatedAtDesc(contentTargetType, targetId);
-        List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        return populateFilesList(responses);
+        return contentMapper.toContentResponseList(contents);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("isAuthenticated()")
-//    @Cacheable(value = "contents", key = "'contentsByUser:' + #userId", unless = "#result == null || #result.isEmpty()")
+//    @Cacheable(value = "contents", key = "'userContents-' + #userId", unless = "#result == null || #result.isEmpty()")
     public List<ContentResponse> getContentsByUser(Long userId) {
         User user = entityLookupService.getUserById(userId);
         List<Content> contents = contentRepository.findByAuthorOrderByCreatedAtDesc(user);
-        List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        return populateFilesList(responses);
+        return contentMapper.toContentResponseList(contents);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.canAccessContent(#parentId)")
     public List<ContentResponse> getContentsByParent(Long parentId) {
         List<Content> contents = contentRepository.findByParentIdOrderByCreatedAtAsc(parentId);
-        List<ContentResponse> responses = contentMapper.toContentResponseList(contents);
-        return populateFilesList(responses);
+        return contentMapper.toContentResponseList(contents);
     }
 
     @Transactional(readOnly = true)
@@ -225,7 +225,7 @@ public class ContentService {
     private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");
+            throw new FlowXException(FlowXError.UNAUTHENTICATED, "No authenticated user found");
 
         UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
         return userPrincipal.getId();
@@ -281,5 +281,10 @@ public class ContentService {
         return contents.stream()
                 .filter(content -> authorizationService.canAccessContent(content.getId()))
                 .collect(Collectors.toList());
+    }
+
+    public List<ContentResponse> filterAndPopulateFiles(List<ContentResponse> contents) {
+        List<ContentResponse> accessibleContents = filterAccessibleContents(contents);
+        return populateFilesList(accessibleContents);
     }
 }

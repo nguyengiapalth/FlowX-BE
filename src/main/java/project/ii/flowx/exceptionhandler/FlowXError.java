@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum FlowXError {
-
     UNCATEGORIZED_EXCEPTION(400, "Uncategorized exception", HttpStatusCode.valueOf(400)),
     BAD_REQUEST( 400, "Bad request", HttpStatusCode.valueOf(400)),
 
@@ -13,7 +12,6 @@ public enum FlowXError {
     INVALID_CREDENTIALS( 401, "Invalid credentials", HttpStatusCode.valueOf(401)),
     INVALID_TOKEN( 401, "Invalid token", HttpStatusCode.valueOf(401)),
     TOKEN_EXPIRED( 401, "Token expired", HttpStatusCode.valueOf(401)),
-    UNAUTHORIZED( 401, "Unauthorized", HttpStatusCode.valueOf(401)),
     UNAUTHENTICATED( 401, "Unauthenticated", HttpStatusCode.valueOf(401)),
 
     FORBIDDEN( 403, "Forbidden", HttpStatusCode.valueOf(403)),

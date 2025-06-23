@@ -13,6 +13,11 @@ import project.ii.flowx.model.dto.FlowXResponse;
 
 import java.io.IOException;
 
+/**
+ * Custom AccessDeniedHandler to handle access denied exceptions in a JWT-based security context.
+ * This handler returns a JSON response with a 403 status code when access is denied.
+ * It doesn't seem very useful
+ */
 @Component
 @Slf4j
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
@@ -36,4 +41,4 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
         
         objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }
-} 
+}

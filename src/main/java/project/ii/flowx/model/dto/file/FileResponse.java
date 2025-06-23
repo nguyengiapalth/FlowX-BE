@@ -6,10 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import project.ii.flowx.model.dto.user.UserResponse;
-import project.ii.flowx.model.entity.User;
 import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileStatus;
-import project.ii.flowx.shared.enums.FileTargetType;
 import project.ii.flowx.shared.enums.FileVisibility;
 
 import java.time.LocalDateTime;

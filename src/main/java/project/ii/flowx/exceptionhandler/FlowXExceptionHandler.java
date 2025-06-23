@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import project.ii.flowx.model.dto.FlowXResponse;
 
+/**
+ * Global exception handler for FlowX application.
+ * Handles various exceptions and returns appropriate HTTP responses.
+ * Most of the error handling is in service logic.
+ */
 @ControllerAdvice
 @Slf4j
 public class FlowXExceptionHandler {
@@ -43,17 +48,5 @@ public class FlowXExceptionHandler {
                         .message(errorCode.getMessage())
                         .build());
     }
-
-    @ExceptionHandler(value = JwtException.class)
-    ResponseEntity<FlowXResponse> handlingTokenExpiredException(JwtException exception) {
-        log.error("Token expired: {}", exception.getMessage());
-        FlowXError errorCode = FlowXError.TOKEN_EXPIRED;
-        return ResponseEntity.status(errorCode.getStatusCode())
-                .body(FlowXResponse.builder()
-                        .code(errorCode.getCode())
-                        .message("Token expired")
-                        .build());
-    }
-
 
 }

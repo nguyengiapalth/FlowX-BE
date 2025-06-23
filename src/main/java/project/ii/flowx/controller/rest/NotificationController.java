@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import project.ii.flowx.applications.service.communicate.NotificationService;
 import project.ii.flowx.model.dto.FlowXResponse;
+import project.ii.flowx.model.dto.PageResponse;
 import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
 import project.ii.flowx.model.dto.notification.NotificationResponse;
 
@@ -38,9 +39,9 @@ public class NotificationController {
             }
     )
     @GetMapping("/my-notifications")
-    public FlowXResponse<Page<NotificationResponse>> getMyNotifications(@RequestParam int page) {
+    public FlowXResponse<PageResponse<NotificationResponse>> getMyNotifications(@RequestParam int page) {
         log.info("Retrieving notifications for the current user");
-        return FlowXResponse.<Page<NotificationResponse>>builder()
+        return FlowXResponse.<PageResponse<NotificationResponse>>builder()
                 .data(notificationService.getMyNotifications(page))
                 .message("Notifications retrieved successfully")
                 .code(200)

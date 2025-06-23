@@ -16,6 +16,11 @@ import org.springframework.context.annotation.Configuration;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Configuration class for OpenAPI documentation.
+ * This class sets up the OpenAPI specification for the application, including API information,
+ * server details, and security schemes.
+ */
 @Configuration
 public class OpenAPIConfig {
     @Bean

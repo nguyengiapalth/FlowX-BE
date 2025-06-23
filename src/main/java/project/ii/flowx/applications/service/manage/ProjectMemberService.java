@@ -129,7 +129,7 @@ public class ProjectMemberService {
     }
 
     @Transactional(readOnly = true)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER') or @authorize.hasProjectRole('MEMBER', #id)")
     public ProjectMemberResponse getProjectMemberById(Long id) {
         ProjectMember projectMember = projectMemberRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Không tìm thấy project member với ID: " + id));

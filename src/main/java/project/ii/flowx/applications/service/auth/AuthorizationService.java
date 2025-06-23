@@ -28,6 +28,7 @@ public class AuthorizationService {
     EntityLookupService entityLookupService;
 
     public List<UserRoleResponse> getUserRoles(Long userId) {
+        log.info("Get roles for user {} in authorization service", userId);
         return userRoleService.getRolesForUser(userId);
     }
 
@@ -186,7 +187,7 @@ public class AuthorizationService {
     private Long getUserId() {
         var context = SecurityContextHolder.getContext();
         if (context.getAuthentication() == null || context.getAuthentication().getPrincipal() == null)
-            throw new FlowXException(FlowXError.UNAUTHORIZED, "No authenticated user found");
+            throw new FlowXException(FlowXError.UNAUTHENTICATED, "No authenticated user found");
 
         UserPrincipal userPrincipal = (UserPrincipal) context.getAuthentication().getPrincipal();
         return userPrincipal.getId();

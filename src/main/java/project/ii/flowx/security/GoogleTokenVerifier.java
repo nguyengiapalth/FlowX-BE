@@ -7,11 +7,17 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import project.ii.flowx.exceptionhandler.FlowXError;
+import project.ii.flowx.exceptionhandler.FlowXException;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
+/**
+ * GoogleTokenVerifier is a utility class that verifies Google ID tokens.
+ * It uses the Google API client library to validate the token against the configured client ID.
+ */
 @Component
 public class GoogleTokenVerifier {
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
@@ -27,7 +33,7 @@ public class GoogleTokenVerifier {
 
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {
-            throw new IllegalArgumentException("Invalid ID token.");
+            throw new FlowXException(FlowXError.INVALID_CREDENTIALS, "Invalid Google ID token: " + idTokenString);
         }
         return idToken.getPayload();
     }

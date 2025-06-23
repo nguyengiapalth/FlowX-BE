@@ -4,6 +4,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,7 @@ import project.ii.flowx.exceptionhandler.FlowXException;
 import project.ii.flowx.model.mapper.DepartmentMapper;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -31,28 +35,34 @@ public class DepartmentService {
     DepartmentMapper departmentMapper;
     EntityLookupService entityLookupService;
     ApplicationEventPublisher applicationEventPublisher;
+    CacheManager cacheManager;
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     @Transactional
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public DepartmentResponse createDepartment(DepartmentCreateRequest departmentCreateRequest) {
         Department department = departmentMapper.toDepartment(departmentCreateRequest);
+//        Objects.requireNonNull(cacheManager.getCache("departments")).evict("all");
+
         return departmentMapper.toDepartmentResponse(departmentRepository.save(department));
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
     @Transactional
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
     public DepartmentResponse updateDepartment(Long id, DepartmentUpdateRequest departmentUpdateRequest) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
 
         departmentMapper.updateDepartmentFromRequest(department, departmentUpdateRequest);
-
         departmentRepository.save(department);
+
+        // Evict cache entries for all departments and the specific one
+//        evictDepartmentsCache(department.getId());
+
         return departmentMapper.toDepartmentResponse(departmentRepository.save(department));
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     @Transactional
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public DepartmentResponse updateManager(Long id, Long newManagerId) {
         log.info("updateManager called with departmentId={}, newManagerId={}", id, newManagerId);
         
@@ -84,26 +94,33 @@ public class DepartmentService {
         log.info("Publishing manager changed event: {}", event);
         applicationEventPublisher.publishEvent(event);
 
+        // Evict cache entries for all departments and the specific one
+//        evictDepartmentsCache(id);
+
         return response;
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     @Transactional
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER')")
     public void deleteDepartment(Long id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
         departmentRepository.delete(department);
+
+        // Evict cache entries for all departments and the specific one
+//        evictDepartmentsCache(id);
     }
 
-
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
+//    @Cacheable(value = "departments", key = "'all'")
     public List<DepartmentResponse> getAllDepartments() {
         return departmentMapper.toDepartmentResponseList(departmentRepository.findAll());
     }
 
-    @PreAuthorize("isAuthenticated()")
     @Transactional(readOnly = true)
+    @PreAuthorize("isAuthenticated()")
+//    @Cacheable(value = "departments", key = "#id")
     public DepartmentResponse getDepartmentById(Long id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
@@ -115,20 +132,28 @@ public class DepartmentService {
      * Used by event handlers
      */
     @Transactional
-    public void updateDepartmentBackgroundObjectKey(Long departmentId, String objectKey) {
-        log.debug("Starting background object key update for department {} with objectKey: {}", departmentId, objectKey);
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGER') or @authorize.hasDepartmentRole('MANAGER', #id)")
+    public void updateDepartmentBackgroundObjectKey(Long id, String objectKey) {
         try {
-            Department department = departmentRepository.findById(departmentId)
+            Department department = departmentRepository.findById(id)
                     .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Department not found"));
             
             String oldBackground = department.getBackground();
             department.setBackground(objectKey);
             departmentRepository.save(department);
-            
-            log.info("Successfully updated background object key for department {}: {} -> {}", departmentId, oldBackground, objectKey);
+
+            // Cache eviction key all and specific department
+//            evictDepartmentsCache(id);
+
+            log.info("Successfully updated background object key for department {}: {} -> {}", id, oldBackground, objectKey);
         } catch (Exception e) {
-            log.error("Error updating background object key for department {}: {}", departmentId, e.getMessage(), e);
-            throw e; // Re-throw to ensure proper error handling
+            log.error("Error updating background object key for department {}: {}", id, e.getMessage(), e);
+            throw e;
         }
+    }
+
+    public void evictDepartmentsCache(Long id) {
+        Objects.requireNonNull(cacheManager.getCache("departments")).evict("all");
+        Objects.requireNonNull(cacheManager.getCache("departments")).evict(id);
     }
 }
