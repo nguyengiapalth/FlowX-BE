@@ -1,11 +1,10 @@
 # Server configuration
 server:
-  port: 3001
-
+  port: ${SERVER_PORT}
   compression:
     enabled: true
   tomcat:
-#    max-threads: 200
+    #    max-threads: 200
     max-connections: 10000
 
 # Spring configuration
@@ -22,9 +21,9 @@ spring:
 
   # Database configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/flow_x
-    username: ......
-    password: .......
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -34,8 +33,8 @@ spring:
   # JPA/Hibernate configuration
   jpa:
     hibernate:
-      ddl-auto: update  # none, validate, update, create, create-drop
-    show-sql: false
+      ddl-auto: ${DDL_AUTO:update}  # none, validate, update, create, create-drop
+    show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: true
@@ -48,8 +47,8 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:{........}.apps.googleusercontent.com}
-            client-secret: ${GOOGLE_CLIENT_SECRET:......}
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             scope:
               - openid
               - profile
@@ -65,38 +64,32 @@ spring:
 
   # JWT Configuration
   jwt:
-    secret: ........
-    expiration: 36000000 # 10 hours in milliseconds
-    refresh-expiration: 604800000  # 7 days in milliseconds
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION}  # 1 hour in milliseconds
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION}  # 7 days in milliseconds
 
   data:
     # Redis configuration
     redis:
-      host: localhost
-      port: 6379
-      database: 0
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      database: ${REDIS_DATABASE}
 
     cache:
       redis:
-        time-to-live: 3600s  # 1 hour
-        key-prefix: flowx
+        time-to-live: ${REDIS_CACHE_TTL:3600}  # 1 hour in seconds
+        key-prefix: ${REDIS_CACHE_KEY_PREFIX:flowx:}
 
-      caffeine:
-        #Caffeine cache configuration
-        spec: maximumSize=1000,expireAfterAccess=1h
+  cache:
+    type: ${CACHE_TYPE:redis}  # Options: redis, caffeine
 
- # jackson configuration
-  jackson:
-    serialization:
-      fail-on-empty-beans: false
-    deserialization:
-      fail-on-unknown-properties: false
+
 
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: .....@gmail.com
-    password: ......
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -104,13 +97,19 @@ spring:
           starttls:
             enable: true
 
+# Application-specific configuration
+app:
+  admin:
+    email: ${ADMIN_EMAIL}
+    password: ${ADMIN_PASSWORD}
+  secure-cookies: ${SECURE_COOKIES:false}
 
+# MinIO configuration
 minio:
-  endpoint: http://localhost:9000
-  access-key: ......
-  secret-key: .......
-  bucket-name: flowx-bucket
-  region: asia-east1
-  useSSL: false
+  endpoint: ${MINIO_ENDPOINT}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  bucket-name: ${MINIO_BUCKET_NAME:flowx-bucket}
+  useSSL: ${MINIO_USE_SSL:false}
   presigned:
-    expiry: 36000
+    expiry: ${MINIO_PRESIGNED_EXPIRY:36000}

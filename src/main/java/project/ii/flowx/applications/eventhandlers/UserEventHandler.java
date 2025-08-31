@@ -6,21 +6,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.events.UserEvent;
-import project.ii.flowx.applications.service.auth.UserRoleService;
-import project.ii.flowx.applications.service.communicate.NotificationService;
-import project.ii.flowx.applications.service.helper.EntityLookupService;
-import project.ii.flowx.applications.service.helper.MailService;
+import project.ii.flowx.module.auth.service.RoleService;
+import project.ii.flowx.module.auth.service.UserRoleService;
+import project.ii.flowx.module.notify.NotificationService;
+import project.ii.flowx.applications.helper.EntityLookupService;
+import project.ii.flowx.applications.helper.MailService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
-import project.ii.flowx.model.dto.notification.NotificationCreateRequest;
-import project.ii.flowx.model.dto.notification.NotificationResponse;
-import project.ii.flowx.model.dto.userrole.UserRoleCreateRequest;
-import project.ii.flowx.model.entity.Role;
-import project.ii.flowx.shared.enums.RoleScope;
+import project.ii.flowx.module.notify.dto.NotificationCreateRequest;
+import project.ii.flowx.module.auth.dto.userrole.UserRoleCreateRequest;
+import project.ii.flowx.module.auth.entity.Role;
+import project.ii.flowx.applications.enums.RoleScope;
 
 import java.io.IOException;
 
@@ -32,21 +31,20 @@ import java.io.IOException;
 public class UserEventHandler {
     UserRoleService userRoleService;
     NotificationService notificationService;
-    EntityLookupService entityLookupService;
+    RoleService roleService;
     MailService mailService;
 
     @EventListener
     public void handleUserCreated(UserEvent.UserCreatedEvent event) throws MessagingException, IOException {
         log.info("User created: {}", event);
 
-        Role role = entityLookupService.getRoleByName("USER")
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
+        Role role = roleService.getRoleByName("USER");
 
         UserRoleCreateRequest userRoleCreateRequest = UserRoleCreateRequest.builder()
                 .userId(event.userId())
                 .roleId(role.getId())
                 .scope(RoleScope.GLOBAL)
-                .scopeId(0L)
+                .scopeId(null) // Global scope, no specific scope ID needed
                 .build();
 
 
@@ -77,32 +75,4 @@ public class UserEventHandler {
         log.info("User deleted: {}", event);
     }
 
-    @EventListener
-    public void handleDepartmentChanged(UserEvent.UserDepartmentChangedEvent event) {
-        log.info("User department changed: {}", event);
-        // delete old department role
-        if(event.oldDepartmentId() != 0)
-            userRoleService.deleteUserRolesByUserIdAndScope(event.userId(), RoleScope.DEPARTMENT, event.oldDepartmentId());
-        if (event.departmentId() == 0) return;
-
-        // assign new department role
-        var role = entityLookupService.getRoleByName("MEMBER")
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
-        UserRoleCreateRequest userRoleCreateRequest = UserRoleCreateRequest.builder()
-                .userId(event.userId())
-                .roleId(role.getId())
-                .scope(RoleScope.DEPARTMENT)
-                .scopeId(event.departmentId())
-                .build();
-        userRoleService.assignRoleToUser(userRoleCreateRequest);
-
-        log.info("Assigning role {} to user {}", role.getName(), event.userId());
-        // send notification
-        NotificationCreateRequest notificationCreateRequest = NotificationCreateRequest.builder()
-                .userId(event.userId())
-                .title("Department Changed")
-                .content("Your department has been changed to " + event.departmentId() + ".")
-                .build();
-        notificationService.createNotification(notificationCreateRequest);
-    }
 }

@@ -1,22 +1,24 @@
 package project.ii.flowx.applications.events;
 
+import java.util.UUID;
+
 public class TaskEvent {
 
-    public record TaskCreatedEvent(long taskId, long userId, String taskTitle, String targetType){}
+    public record TaskCreatedEvent(UUID taskId, UUID userId, String taskTitle, String targetType){}
 
-    public record TaskUpdatedEvent(long taskId, long userId, String taskTitle){}
+    public record TaskUpdatedEvent(UUID taskId, UUID userId, String taskTitle){}
 
-    public record TaskDeletedEvent(long taskId, long userId, String taskTitle){}
+    public record TaskDeletedEvent(UUID taskId, UUID userId, String taskTitle){}
 
-    public record TaskAssignedEvent(long taskId, long assigneeId, long assignerId, String taskTitle){}
+    public record TaskAssignedEvent(UUID taskId, UUID assigneeId, UUID assignerId, String taskTitle){}
 
-    public record TaskUnassignedEvent(long taskId, long previousAssigneeId, String taskTitle){}
+    public record TaskUnassignedEvent(UUID taskId, UUID previousAssigneeId, String taskTitle){}
 
-    public record TaskCompletedEvent(long taskId, long userId, String taskTitle){}
+    public record TaskCompletedEvent(UUID taskId, UUID userId, String taskTitle){}
 
-    public record TaskStatusChangedEvent(long taskId, long userId, String oldStatus, String newStatus, String taskTitle){}
+    public record TaskStatusChangedEvent(UUID taskId, UUID userId, String oldStatus, String newStatus, String taskTitle){}
 
-    public record TaskDueDateReminderEvent(long taskId, long assigneeId, String taskTitle, int daysUntilDue){}
+    public record TaskDueDateReminderEvent(UUID taskId, UUID assigneeId, String taskTitle, int daysUntilDue){}
 
-    public record TaskOverdueEvent(long taskId, long assigneeId, String taskTitle, int daysOverdue){}
+    public record TaskOverdueEvent(UUID taskId, UUID assigneeId, String taskTitle, long daysOverdue){}
 }

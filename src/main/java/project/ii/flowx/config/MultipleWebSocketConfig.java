@@ -7,7 +7,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-import project.ii.flowx.security.WebSocketAuthInterceptor;
+import project.ii.flowx.security.WebSocketAuthInterceptorImpl;
 
 /**
  * Configuration class for WebSocket message broker.
@@ -18,7 +18,7 @@ import project.ii.flowx.security.WebSocketAuthInterceptor;
 @RequiredArgsConstructor
 public class MultipleWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
+    private final WebSocketAuthInterceptorImpl webSocketAuthInterceptor;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -33,6 +33,9 @@ public class MultipleWebSocketConfig implements WebSocketMessageBrokerConfigurer
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
 
+        registry.addEndpoint("/ws/conversation")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 
     @Override

@@ -22,6 +22,8 @@ public enum FlowXError {
 
     USER_ALREADY_EXISTS( 409, "Email already exists", HttpStatusCode.valueOf(409)),
     ALREADY_EXISTS( 409, "Already exists", HttpStatusCode.valueOf(409)),
+    CONCURRENT_OPERATION( 409, "Concurrent operation in progress", HttpStatusCode.valueOf(409)),
+    CONFLICT( 409, "Conflict", HttpStatusCode.valueOf(409)),
 
     INTERNAL_SERVER_ERROR( 500, "Internal server error", HttpStatusCode.valueOf(500)),
     INVALID_INPUT( 400, "Invalid input", HttpStatusCode.valueOf(400)),;

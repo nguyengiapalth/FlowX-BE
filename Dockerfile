@@ -1,27 +1,27 @@
 # Multi-stage Dockerfile for FlowX Backend
 # Stage 1: Build stage
-FROM maven:3.9.9-eclipse-temurin-21 AS build
+FROM gradle:8.5-jdk21 AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy Maven configuration files
-COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-COPY mvnw.cmd .
+# Copy Gradle configuration files
+COPY build.gradle .
+COPY settings.gradle .
+COPY gradle gradle
+COPY gradlew .
 
-# Make Maven wrapper executable
-RUN chmod +x ./mvnw
+# Make Gradle wrapper executable
+RUN chmod +x ./gradlew
 
-# Download dependencies (this layer will be cached if pom.xml doesn't change)
-RUN ./mvnw dependency:go-offline -B
+# Download dependencies (this layer will be cached if build.gradle doesn't change)
+RUN ./gradlew dependencies --no-daemon
 
 # Copy source code
 COPY src ./src
 
 # Build the application
-RUN ./mvnw clean package -DskipTests -B
+RUN ./gradlew clean build -x test --no-daemon
 
 # Stage 2: Runtime stage
 FROM eclipse-temurin:21-jre-jammy
@@ -38,7 +38,7 @@ RUN groupadd -r flowx && useradd -r -g flowx flowx
 WORKDIR /app
 
 # Copy the built JAR from build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/build/libs/*.jar app.jar
 
 # Change ownership to non-root user
 RUN chown -R flowx:flowx /app

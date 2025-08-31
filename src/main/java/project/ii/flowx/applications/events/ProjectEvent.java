@@ -1,20 +1,19 @@
 package project.ii.flowx.applications.events;
 
-import project.ii.flowx.shared.enums.MemberStatus;
-import project.ii.flowx.shared.enums.RoleDefault;
+import project.ii.flowx.applications.enums.RoleDefault;
+
+import java.util.UUID;
 
 public class ProjectEvent {
-    public record ProjectCreatedEvent(long projectId, long departmentId) {}
+    public record ProjectCreatedEvent(UUID projectId) {}
 
-    public record ProjectUpdatedEvent(long projectId) {}
+    public record ProjectUpdatedEvent(UUID projectId) {}
 
-    public record ProjectDeletedEvent(long projectId) {}
+    public record ProjectDeletedEvent(UUID projectId) {}
 
-    public record AddMemberEvent(long projectId, long userId, RoleDefault role) {}
+    public record AddMemberEvent(UUID projectId, UUID userId, RoleDefault role) {}
 
-    public record RemoveMemberEvent(long projectId, long userId) {}
+    public record RemoveMemberEvent(UUID projectId, UUID userId) {}
 
-    public record UpdateMemberRoleEvent(long projectId, long userId, RoleDefault newRole) {}
-
-    public record UpdateMemberStatusEvent(long projectId, long userId, RoleDefault newRole) {}
+    public record UpdateMemberRoleEvent(UUID projectId, UUID userId, RoleDefault newRole) {}
 }

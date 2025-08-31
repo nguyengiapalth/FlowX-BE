@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -33,7 +34,6 @@ public class CacheConfig {
     @Value("${cache.default.ttl:300}")
     private int defaultTtl;
 
-//    @Primary
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         // Configure ObjectMapper for JSON serialization and deserialization with polymorphic type handling
@@ -72,6 +72,24 @@ public class CacheConfig {
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()
                 .build();
+    }
+
+    /**
+     * StringRedisTemplate for session management and simple key-value operations
+     */
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(connectionFactory);
+        
+        // Use String serializers for both keys and values
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+        
+        template.afterPropertiesSet();
+        return template;
     }
 
 

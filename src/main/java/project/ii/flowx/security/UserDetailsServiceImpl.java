@@ -7,10 +7,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import project.ii.flowx.applications.service.auth.UserRoleService;
-import project.ii.flowx.model.entity.User;
-import project.ii.flowx.model.repository.UserRepository;
-import project.ii.flowx.model.dto.userrole.UserRoleResponse;
+import project.ii.flowx.module.auth.service.UserRoleService;
+import project.ii.flowx.module.user.entity.User;
+import project.ii.flowx.module.user.repository.UserRepository;
+import project.ii.flowx.module.auth.dto.userrole.UserRoleResponse;
 
 import java.util.List;
 

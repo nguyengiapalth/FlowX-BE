@@ -10,14 +10,14 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import project.ii.flowx.model.entity.Role;
-import project.ii.flowx.model.entity.User;
-import project.ii.flowx.model.entity.UserRole;
-import project.ii.flowx.model.repository.RoleRepository;
-import project.ii.flowx.model.repository.UserRepository;
-import project.ii.flowx.model.repository.UserRoleRepository;
-import project.ii.flowx.shared.enums.RoleDefault;
-import project.ii.flowx.shared.enums.RoleScope;
+import project.ii.flowx.module.auth.entity.Role;
+import project.ii.flowx.module.user.entity.User;
+import project.ii.flowx.module.auth.entity.UserRole;
+import project.ii.flowx.module.auth.repository.RoleRepository;
+import project.ii.flowx.module.user.repository.UserRepository;
+import project.ii.flowx.module.auth.repository.UserRoleRepository;
+import project.ii.flowx.applications.enums.RoleDefault;
+import project.ii.flowx.applications.enums.RoleScope;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -68,19 +68,19 @@ public class ApplicationInit {
                 userRepository.save(adminUser);
 
                 userRoleRepository.save(UserRole.builder()
-                        .user(adminUser)
+                        .userId(adminUser.getId())
                         .role(roleRepository.findByName(String.valueOf(RoleDefault.MANAGER))
                                 .orElseThrow(() -> new RuntimeException("Role not found")))
                         .scope(RoleScope.GLOBAL)
-                        .scopeId(0L)
+                        .scopeId(null)
                         .build());
 
                 userRoleRepository.save(UserRole.builder()
-                        .user(adminUser)
+                        .userId(adminUser.getId())
                         .role(roleRepository.findByName(String.valueOf(RoleDefault.USER))
                                 .orElseThrow(() -> new RuntimeException("Role not found")))
                         .scope(RoleScope.GLOBAL)
-                        .scopeId(0L)
+                        .scopeId(null)
                         .build());
 
                 log.info("Admin user created with email: {}", adminEmail);

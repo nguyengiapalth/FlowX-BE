@@ -15,15 +15,16 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import project.ii.flowx.model.repository.InvalidTokenRepository;
-import project.ii.flowx.model.dto.FlowXResponse;
+import project.ii.flowx.dto.Response;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
+import project.ii.flowx.module.auth.repository.InvalidTokenRepository;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -37,13 +38,14 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final InvalidTokenRepository invalidTokenRepository;
-    private final FlowXJwtDecoder jwtDecoder;
+    private final JwtDecoderImpl jwtDecoder;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
-                                    @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
-            throws ServletException, IOException {
+                                    @NotNull HttpServletResponse response,
+                                    @NotNull FilterChain filterChain
+    ) throws ServletException, IOException {
         log.info(request.getRequestURI());
 
         try {
@@ -52,10 +54,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Use FlowXJwtDecoder for token validation and parsing
                 Jwt decodedJWT = jwtDecoder.decode(jwt);
                 
-                Long id = decodedJWT.getClaim("userId");
+                String id = decodedJWT.getClaim("userId");
+                UUID uuid = UUID.fromString(id);
                 String email = decodedJWT.getSubject();
                 String scope = decodedJWT.getClaim("scope");
-                UserPrincipal userDetails = new UserPrincipal(id, email, null, Collections.emptyList());
+                UserPrincipal userDetails = new UserPrincipal(uuid, email, null, Collections.emptyList());
 
                 List<SimpleGrantedAuthority> authorities = Collections.emptyList();
 
@@ -79,7 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } else {
                 handleInvalidToken(response);
             }
-            return; // Không tiếp tục filter chain
+            return; // Stop further processing if token is invalid or expired
         }
 
         filterChain.doFilter(request, response);
@@ -97,7 +100,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         
-        FlowXResponse<?> errorResponse = FlowXResponse.builder()
+        Response<?> errorResponse = Response.builder()
                 .code(401)
                 .message("Token expired")
                 .build();
@@ -109,7 +112,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         
-        FlowXResponse<?> errorResponse = FlowXResponse.builder()
+        Response<?> errorResponse = Response.builder()
                 .code(401)
                 .message("Invalid token")
                 .build();

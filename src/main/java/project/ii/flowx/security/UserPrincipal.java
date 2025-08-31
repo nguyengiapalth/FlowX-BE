@@ -6,13 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import project.ii.flowx.model.entity.User;
-import project.ii.flowx.model.dto.userrole.UserRoleResponse;
+import project.ii.flowx.module.user.entity.User;
+import project.ii.flowx.module.auth.dto.userrole.UserRoleResponse;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -23,14 +20,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserPrincipal implements UserDetails {
     @Getter
-    private final Long id;
+    private final UUID id;
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
     @Setter
     private Map<String, Object> attributes;
 
-    public UserPrincipal(Long id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
+    public UserPrincipal(UUID id, String email, String password, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -85,26 +82,6 @@ public class UserPrincipal implements UserDetails {
     @Override
     public String getUsername() {
         return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
     }
 
     @Override

@@ -3,10 +3,9 @@ package project.ii.flowx.exceptionhandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import project.ii.flowx.model.dto.FlowXResponse;
+import project.ii.flowx.dto.Response;
 
 /**
  * Global exception handler for FlowX application.
@@ -19,9 +18,9 @@ public class FlowXExceptionHandler {
     private static final String MIN_ATTRIBUTE = "min";
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<FlowXResponse> handlingRuntimeException(RuntimeException exception) {
+    public ResponseEntity<Response> handlingRuntimeException(RuntimeException exception) {
         log.error("RuntimeException: ", exception);
-        FlowXResponse response = new FlowXResponse();
+        Response response = new Response();
         response.setCode(FlowXError.UNCATEGORIZED_EXCEPTION.getCode());
         response.setMessage(exception.getMessage());
         return ResponseEntity.badRequest().body(response);
@@ -29,21 +28,21 @@ public class FlowXExceptionHandler {
 
 
     @ExceptionHandler(value = FlowXException.class)
-    ResponseEntity<FlowXResponse> handlingFlowXException(FlowXException exception) {
+    ResponseEntity<Response> handlingFlowXException(FlowXException exception) {
         FlowXError flowXError = exception.getFlowXError();
-        FlowXResponse FlowXResponse = new FlowXResponse();
+        Response Response = new Response();
 
-        FlowXResponse.setCode(flowXError.getCode());
-        FlowXResponse.setMessage(exception.getMessage());
+        Response.setCode(flowXError.getCode());
+        Response.setMessage(exception.getMessage());
 
-        return ResponseEntity.status(flowXError.getStatusCode()).body(FlowXResponse);
+        return ResponseEntity.status(flowXError.getStatusCode()).body(Response);
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<FlowXResponse> handlingAccessDeniedException(AccessDeniedException exception) {
+    ResponseEntity<Response> handlingAccessDeniedException(AccessDeniedException exception) {
         FlowXError errorCode = FlowXError.ACCESS_DENIED;
         return ResponseEntity.status(errorCode.getStatusCode())
-                .body(FlowXResponse.builder()
+                .body(Response.builder()
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
                         .build());

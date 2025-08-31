@@ -9,9 +9,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.events.FileEvent;
-import project.ii.flowx.applications.service.communicate.ContentService;
-import project.ii.flowx.applications.service.communicate.TaskService;
-import project.ii.flowx.shared.enums.FileTargetType;
+import project.ii.flowx.module.manage.service.TaskService;
+import project.ii.flowx.applications.enums.FileTargetType;
+
+import java.util.UUID;
 
 @Component
 @EnableAsync
@@ -20,7 +21,6 @@ import project.ii.flowx.shared.enums.FileTargetType;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FileEventHandler {
     
-    ContentService contentService;
     TaskService taskService;
     
     @EventListener
@@ -28,9 +28,9 @@ public class FileEventHandler {
         log.info("File uploaded event received: {}", event);
         
         try {
-            syncHasFileFlag(event.entityId(), event.entityType(), event.fileId());
+            syncHasFileFlag(event.targetId(), event.targetType(), event.fileId());
             log.info("HasFile flag synchronized synchronously after file upload for entity {} (type: {})", 
-                    event.entityId(), event.entityType());
+                    event.targetId(), event.targetType());
         } catch (Exception e) {
             log.error("Error synchronizing hasFile flag after file upload: {}", e.getMessage(), e);
         }
@@ -41,9 +41,9 @@ public class FileEventHandler {
         log.info("File deleted event received: {}", event);
         
         try {
-            syncHasFileFlag(event.entityId(), event.entityType(), null); // No fileId needed for deletion
+            syncHasFileFlag(event.targetId(), event.targetType(), null); // No fileId needed for deletion
             log.info("HasFile flag synchronized synchronously after file deletion for entity {} (type: {})", 
-                    event.entityId(), event.entityType());
+                    event.targetId(), event.targetType());
         } catch (Exception e) {
             log.error("Error synchronizing hasFile flag after file deletion: {}", e.getMessage(), e);
         }
@@ -59,36 +59,41 @@ public class FileEventHandler {
     
     /**
      * Synchronizes the hasFile flag for the specified entity
-     * @param entityId The ID of the entity
-     * @param entityType The type of the entity (CONTENT, TASK, etc.)
+     *
+     * @param targetId   The ID of the entity
+     * @param targetType The type of the entity (CONTENT, TASK, etc.)
      */
-    private void syncHasFileFlag(Long entityId, String entityType, Long fileId) {
-        if (entityId == null || entityType == null) {
+    private void syncHasFileFlag(UUID targetId, FileTargetType targetType, UUID fileId) {
+        if (targetId == null || targetType == null) {
             log.warn("Cannot sync hasFile flag: entityId or entityType is null");
             return;
         }
         
         try {
-            FileTargetType targetType = FileTargetType.valueOf(entityType);
-            
+
             switch (targetType) {
-                case CONTENT -> {
-                    contentService.updateHasFileFlag(entityId, fileId);
-                    log.debug("Updated hasFile flag for content {}", entityId);
+                case POST -> {
+                    log.debug("Updated hasFile flag for content {}", targetId);
+                }
+                case COMMENT -> {
+                    log.debug("Updated hasFile flag for comment {}", targetId);
+                }
+                case MESSAGE -> {
+                    log.debug("Updated hasFile flag for message {}", targetId);
                 }
                 case TASK -> {
-                    taskService.updateHasFileFlag(entityId);
-                    log.debug("Updated hasFile flag for task {}", entityId);
+                    taskService.updateHasFileFlag(targetId);
+                    log.debug("Updated hasFile flag for task {}", targetId);
                 }
                 default -> {
-                    log.warn("Unknown entity type for hasFile flag sync: {}", entityType);
+                    log.warn("Unknown entity type for hasFile flag sync: {}", targetType);
                 }
             }
         } catch (IllegalArgumentException e) {
-            log.error("Invalid entity type: {}", entityType, e);
+            log.error("Invalid entity type: {}", targetType, e);
         } catch (Exception e) {
-            log.error("Error updating hasFile flag for entity {} (type: {}): {}", 
-                    entityId, entityType, e.getMessage(), e);
+            log.error("Error updating hasFile flag for entity {} (type: {}): {}",
+                    targetId, targetType, e.getMessage(), e);
         }
     }
 }

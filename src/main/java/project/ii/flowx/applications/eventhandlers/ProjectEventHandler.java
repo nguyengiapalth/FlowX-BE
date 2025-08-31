@@ -8,15 +8,16 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import project.ii.flowx.applications.events.ProjectEvent;
-import project.ii.flowx.applications.service.auth.UserRoleService;
-import project.ii.flowx.applications.service.communicate.NotificationService;
-import project.ii.flowx.applications.service.helper.EntityLookupService;
+import project.ii.flowx.module.auth.service.RoleService;
+import project.ii.flowx.module.auth.service.UserRoleService;
+import project.ii.flowx.module.notify.NotificationService;
+import project.ii.flowx.applications.helper.EntityLookupService;
 import project.ii.flowx.exceptionhandler.FlowXError;
 import project.ii.flowx.exceptionhandler.FlowXException;
-import project.ii.flowx.model.dto.userrole.UserRoleCreateRequest;
-import project.ii.flowx.model.entity.Role;
-import project.ii.flowx.shared.enums.RoleDefault;
-import project.ii.flowx.shared.enums.RoleScope;
+import project.ii.flowx.module.auth.dto.userrole.UserRoleCreateRequest;
+import project.ii.flowx.module.auth.entity.Role;
+import project.ii.flowx.applications.enums.RoleDefault;
+import project.ii.flowx.applications.enums.RoleScope;
 
 @Component
 @EnableAsync
@@ -26,14 +27,12 @@ import project.ii.flowx.shared.enums.RoleScope;
 public class ProjectEventHandler {
     UserRoleService userRoleService;
     NotificationService notificationService;
-    EntityLookupService entityLookupService;
+    RoleService roleService;
 
     @EventListener
     public void handleProjectCreatedEvent(ProjectEvent.ProjectCreatedEvent event) {
         log.info("Project created: {}", event);
-        // send socket event to user
-        // NotificationCreateRequest notificationCreateRequest = ...
-        // notificationService.createNotification(notificationCreateRequest);
+        /// Create a start post for the project
 
     }
 
@@ -41,18 +40,19 @@ public class ProjectEventHandler {
     public void handleProjectUpdatedEvent(ProjectEvent.ProjectUpdatedEvent event) {
         log.info("Project updated with ID: {}", event.projectId());
         // Handle project update logic here
+        // send notification to members
     }
 
     @EventListener
     public void handleProjectDeletedEvent(ProjectEvent.ProjectDeletedEvent event) {
         log.info("Project deleted with ID: {}", event.projectId());
         userRoleService.deleteUserRolesByScope(RoleScope.PROJECT ,event.projectId());
+        /// send notification to members
     }
 
     @EventListener
     public void handleAddMemberEvent(ProjectEvent.AddMemberEvent event) {
-        Role role = entityLookupService.getRoleByName("MEMBER")
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
+        Role role = roleService.getRoleByName("MEMBER");
 
         UserRoleCreateRequest userRoleCreateRequest = UserRoleCreateRequest.builder()
                 .userId(event.userId())
@@ -63,9 +63,7 @@ public class ProjectEventHandler {
 
         userRoleService.assignRoleToUser(userRoleCreateRequest);
         if (event.role().equals(RoleDefault.MANAGER)) {
-            Role managerRole = entityLookupService.getRoleByName("MANAGER")
-                    .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Manager role not found"));
-
+            Role managerRole = roleService.getRoleByName("MANAGER");
             UserRoleCreateRequest managerRoleRequest = UserRoleCreateRequest.builder()
                     .userId(event.userId())
                     .roleId(managerRole.getId())
@@ -85,8 +83,8 @@ public class ProjectEventHandler {
 
     @EventListener
     public void handleUpdateMemberEvent(ProjectEvent.UpdateMemberRoleEvent event) {
-        Role role = entityLookupService.getRoleByName("MANAGER")
-                .orElseThrow(() -> new FlowXException(FlowXError.NOT_FOUND, "Role not found"));
+        Role role = roleService.getRoleByName("MANAGER");
+
 
         if (event.newRole() == RoleDefault.MANAGER) {
             UserRoleCreateRequest userRoleCreateRequest = UserRoleCreateRequest.builder()
